@@ -8,10 +8,14 @@ export const jobApplicationSchema = z.object({
 export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
   const response = await fetch(`${BaseRoute}/jobs/apply`, {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({url: data.jobUrl}),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
+  const res = await response.json();
   if (response.status > 299) {
-    throw new Error("Failed to apply to job");
+    throw new Error(res.error ?? "Failed to apply to job");
   }
-  return response.json();
+  return res;
 }
