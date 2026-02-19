@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -30,7 +29,6 @@ export default function CustomJobDialog({
   const [jobUrl, setJobUrl] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
     onSubmit({ jobUrl });
     setJobUrl("");
     onOpenChange(false);
@@ -38,7 +36,7 @@ export default function CustomJobDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <form onSubmit={handleSubmit}>
+      <div>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Apply to job</DialogTitle>
@@ -71,6 +69,7 @@ export default function CustomJobDialog({
               type="submit"
               className="hover:opacity-80 cursor-pointer"
               disabled={!jobUrl || isLoading}
+              onClick={handleSubmit}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -80,7 +79,7 @@ export default function CustomJobDialog({
             </Button>
           </DialogFooter>
         </DialogContent>
-      </form>
+      </div>
     </Dialog>
   );
 }
