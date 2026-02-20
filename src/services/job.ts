@@ -15,7 +15,7 @@ export interface FetchAllJobApplicationsResponse {
 export interface JobApplication {
   id: string;
   url: string;
-  status: string;
+  status: "processing" | "applied" | "failed";
   createdAt: string;
   updatedAt: string;
 }
