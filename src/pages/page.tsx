@@ -1,4 +1,5 @@
 import CustomJobDialog from "@/components/custom/CustomJobDialog";
+import ResumeUploadDialog from "@/components/custom/ResumeUploadDialog";
 import { Button } from "@/components/ui/button";
 import { applyToJob, type jobApplicationSchema } from "@/services/job";
 import { Send, Upload } from "lucide-react";
@@ -24,6 +25,7 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = tabFromSearchParams(searchParams);
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);
+  const [isResumeUploadDialogOpen, setIsResumeUploadDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleTabChange = (value: string) => {
@@ -46,6 +48,11 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const handleResumeUploadSubmit = (file: File) => {
+    // Template handler - will implement upload logic later
+    console.log("Resume upload:", file);
+  };
   return (
     <>
       <div className="bg-gray-50 text-gray-800 w-screen h-screen px-10 py-10">
@@ -57,7 +64,10 @@ export default function Home() {
             Upload your resume and automate your job applications.
           </p>
           <div className="flex gap-2 mt-4">
-            <Button className="hover:opacity-80 cursor-pointer">
+            <Button
+              onClick={() => setIsResumeUploadDialogOpen(true)}
+              className="hover:opacity-80 cursor-pointer"
+            >
               <Upload className="w-4 h-4 mr-1" />
               Upload Resume
             </Button>
@@ -106,6 +116,11 @@ export default function Home() {
         onOpenChange={handleCustomJobDialogOpenChange}
         onSubmit={handleCustomJobDialogSubmit}
         isLoading={isLoading}
+      />
+      <ResumeUploadDialog
+        open={isResumeUploadDialogOpen}
+        onOpenChange={setIsResumeUploadDialogOpen}
+        onSubmit={handleResumeUploadSubmit}
       />
     </>
   );
