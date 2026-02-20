@@ -5,6 +5,21 @@ export const jobApplicationSchema = z.object({
   jobUrl: z.url(),
 });
 
+export interface FetchAllJobApplicationsResponse {
+  total: number;
+  page: number;
+  limit: number;
+  data: JobApplication[];
+}
+
+export interface JobApplication {
+  id: string;
+  url: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
   const response = await fetch(`${BaseRoute}/jobs/apply`, {
     method: "POST",
@@ -18,4 +33,17 @@ export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
     throw new Error(res.error ?? "Failed to apply to job");
   }
   return res;
+}
+
+
+export async function fetchAllJobApplications(page: number, limit: number): Promise<FetchAllJobApplicationsResponse> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetch(`${BaseRoute}/jobs?${params}`, {
+    method: "GET",
+  });
+  const res = await response.json();
+  if (response.status !== 200) {
+    throw new Error(res.error ?? "Failed to fetch job applications");
+  }
+  return res.data;
 }

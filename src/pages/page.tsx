@@ -5,6 +5,9 @@ import { Send, Upload } from "lucide-react";
 import { useState } from "react";
 import z from "zod";
 import { toast } from "@/hooks/toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SearchJobsTab from "@/components/custom/SearchJobsTab";
+import OngoingApplicationsTab from "@/components/custom/OngoingApplicationstab";
 
 export default function Home() {
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);
@@ -51,7 +54,29 @@ export default function Home() {
             </Button>
           </div>
         </header>
-        <hr className="text-gray-300 mt-5" />
+        <Tabs defaultValue="search-jobs" className="w-full mt-5">
+          <TabsList className="bg-transparent rounded-none p-0 border-b">
+            <TabsTrigger
+              value="search-jobs"
+              className="data-active:border-b-2 data-active:border-b-purple-500 rounded-none shadow-none data-active:bg-transparent "
+            >
+              Search Jobs
+            </TabsTrigger>
+            <TabsTrigger
+              value="ongoing-applications"
+              className="data-active:border-b-2 data-active:border-b-purple-500 rounded-none shadow-none data-active:bg-transparent"
+            >
+              Ongoing Applications
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="search-jobs">
+            <SearchJobsTab />
+          </TabsContent>
+
+          <TabsContent value="ongoing-applications">
+            <OngoingApplicationsTab />
+          </TabsContent>
+        </Tabs>
       </div>
       <CustomJobDialog
         open={isCustomJobDialogOpen}
