@@ -8,10 +8,27 @@ import { toast } from "@/hooks/toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchJobsTab from "@/components/custom/SearchJobsTab";
 import OngoingApplicationsTab from "@/components/custom/OngoingApplicationsTab";
+import { useSearchParams } from "react-router";
+
+const TAB_VALUES = ["search-jobs", "ongoing-applications"] as const;
+type TabValue = (typeof TAB_VALUES)[number];
+
+function tabFromSearchParams(searchParams: URLSearchParams): TabValue {
+  const tab = searchParams.get("tab");
+  return TAB_VALUES.includes(tab as TabValue)
+    ? (tab as TabValue)
+    : "search-jobs";
+}
 
 export default function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = tabFromSearchParams(searchParams);
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
   const handleCustomJobDialogOpenChange = (open: boolean) => {
     setIsCustomJobDialogOpen(open);
   };
@@ -54,7 +71,11 @@ export default function Home() {
             </Button>
           </div>
         </header>
-        <Tabs defaultValue="search-jobs" className="w-full mt-5">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full mt-5"
+        >
           <TabsList className="bg-transparent rounded-none p-0 border-b">
             <TabsTrigger
               value="search-jobs"
