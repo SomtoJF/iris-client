@@ -7,7 +7,7 @@ import z from "zod";
 import { toast } from "@/hooks/toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchJobsTab from "@/components/custom/SearchJobsTab";
-import OngoingApplicationsTab from "@/components/custom/OngoingApplicationstab";
+import OngoingApplicationsTab from "@/components/custom/OngoingApplicationsTab";
 
 export default function Home() {
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);

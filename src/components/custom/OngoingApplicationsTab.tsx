@@ -1,11 +1,13 @@
 import { fetchAllJobApplications, type JobApplication } from "@/services/job";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link, Loader2, CheckCircle2, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ExternalLink, Loader2, CheckCircle2, X } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type { LucideIcon } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { GenerativeGrid, type TableConfig } from "./GenerativeGrid";
 
 dayjs.extend(relativeTime);
 
@@ -44,22 +46,73 @@ function getStatusTagConfig(status: JobStatus): {
   }
 }
 
+const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
+  shimmer?: () => React.ReactNode;
+  width?: string;
+})[] = [
+  {
+    accessorKey: "url",
+    header: "Job URL",
+    cell: ({ row }) => (
+      <a
+        href={row.original.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer inline-flex items-center gap-2 truncate"
+      >
+        {row.original.url}
+        <ExternalLink className="w-4 h-4" />
+      </a>
+    ),
+    shimmer: () => <Skeleton className="h-4 w-64" />,
+    width: "400px",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const { className, icon: Icon } = getStatusTagConfig(row.original.status);
+      return (
+        <Badge variant="outline" className={className}>
+          <Icon
+            className={`w-3 h-3 ${row.original.status === "processing" ? "animate-spin" : ""}`}
+          />
+          <span className="capitalize">{row.original.status}</span>
+        </Badge>
+      );
+    },
+    shimmer: () => <Skeleton className="h-6 w-24" />,
+    width: "150px",
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Applied",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dayjs(row.original.createdAt).fromNow()}
+      </span>
+    ),
+    shimmer: () => <Skeleton className="h-4 w-20" />,
+    width: "120px",
+  },
+];
+
 export default function OngoingApplicationsTab() {
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
-  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     handleFetchJobApplications();
-  }, [page]);
+  }, [pageIndex]);
 
   const handleFetchJobApplications = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchAllJobApplications(page, LIMIT);
-      setJobApplications((prev) =>
-        page === 1 ? res.data : [...prev, ...res.data],
-      );
+      const res = await fetchAllJobApplications(pageIndex + 1, LIMIT);
+      setJobApplications(res.data);
+      setTotal(res.total);
     } catch (error) {
       console.error(error);
     } finally {
@@ -67,60 +120,25 @@ export default function OngoingApplicationsTab() {
     }
   };
 
-  const handleLoadMore = () => {
-    setPage(page + 1);
+  const handlePageChange = (newPageIndex: number) => {
+    setPageIndex(newPageIndex);
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full flex justify-center items-center h-full">
-        <Loader2 className="w-4 h-4 animate-spin" />
-      </div>
-    );
-  }
+  const tableConfig: TableConfig<JobApplication> = {
+    columns: jobApplicationColumns,
+    data: jobApplications,
+    pagination: {
+      pageIndex,
+      pageSize: LIMIT,
+      total,
+      onPageChange: handlePageChange,
+    },
+    loading: isLoading,
+  };
 
   return (
     <div className="w-full pb-8">
-      <div className="flex flex-col gap-4">
-        {jobApplications.map((jobApplication) => (
-          <div key={jobApplication.id} className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <a
-                href={jobApplication.url}
-                target="_blank"
-                className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer"
-              >
-                {jobApplication.url} <Link className="w-4 h-4 ml-2" />
-              </a>
-              {(() => {
-                const { className, icon: Icon } = getStatusTagConfig(
-                  jobApplication.status,
-                );
-                return (
-                  <Badge variant="outline" className={className}>
-                    <Icon
-                      className={`w-3 h-3 ${jobApplication.status === "processing" ? "animate-spin" : ""}`}
-                    />
-                    <span className="capitalize">{jobApplication.status}</span>
-                  </Badge>
-                );
-              })()}
-            </div>
-            <span className="text-sm text-gray-500">
-              {dayjs(jobApplication.createdAt).fromNow()}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center mt-4">
-        <Button onClick={handleLoadMore} disabled={isLoading}>
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            "Load More"
-          )}
-        </Button>
-      </div>
+      <GenerativeGrid config={tableConfig} />
     </div>
   );
 }
