@@ -54,19 +54,18 @@ export default function Home() {
             Apply To Custom Job
           </h1>
           <p className="text-sm text-gray-600">
-            Use this tool to upload your resume and quickly apply to a custom
-            job with the help of AI automation.
+            Upload your resume and automate your job applications.
           </p>
           <div className="flex gap-2 mt-4">
             <Button className="hover:opacity-80 cursor-pointer">
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="w-4 h-4 mr-1" />
               Upload Resume
             </Button>
             <Button
               onClick={() => setIsCustomJobDialogOpen(true)}
               className="hover:opacity-80 cursor-pointer"
             >
-              <Send className="w-4 h-4 mr-2" />
+              <Send className="w-4 h-4 mr-1" />
               Apply to Custom Job
             </Button>
           </div>
@@ -76,16 +75,19 @@ export default function Home() {
           onValueChange={handleTabChange}
           className="w-full mt-5"
         >
-          <TabsList className="bg-transparent rounded-none p-0 border-b">
+          <TabsList
+            variant="line"
+            className="bg-transparent rounded-none p-0 border-b border-gray-200 h-auto gap-0"
+          >
             <TabsTrigger
               value="search-jobs"
-              className="data-active:border-b-2 data-active:border-b-purple-500 rounded-none shadow-none data-active:bg-transparent "
+              className="rounded-none border-0 bg-transparent px-4 py-2 shadow-none data-active:bg-transparent data-active:shadow-none focus-visible:ring-0 focus-visible:outline-none after:hidden data-active:border-b-2 data-active:border-b-purple-500 data-active:border-t-0 data-active:-mb-px text-gray-600 data-active:text-gray-900 data-active:font-medium"
             >
               Search Jobs
             </TabsTrigger>
             <TabsTrigger
               value="ongoing-applications"
-              className="data-active:border-b-2 data-active:border-b-purple-500 rounded-none shadow-none data-active:bg-transparent"
+              className="rounded-none border-0 bg-transparent px-4 py-2 shadow-none data-active:bg-transparent data-active:shadow-none focus-visible:ring-0 focus-visible:outline-none after:hidden data-active:border-b-2 data-active:border-b-purple-500 data-active:border-t-0 data-active:-mb-px text-gray-600 data-active:text-gray-900 data-active:font-medium"
             >
               Ongoing Applications
             </TabsTrigger>
