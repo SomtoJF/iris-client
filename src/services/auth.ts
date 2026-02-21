@@ -44,3 +44,27 @@ export async function signup(data: z.infer<typeof signupSchema>) {
   }
   return res;
 }
+
+export interface User {
+  id: string;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  CreatedAt: string;
+  UpdatedAt: string;
+}
+
+export async function getCurrentUser(): Promise<User> {
+  const response = await fetch(`${BaseRoute}/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status !== 200) {
+    throw new Error(res.error ?? "Failed to fetch current user");
+  }
+  return res.data;
+}

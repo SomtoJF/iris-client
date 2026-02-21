@@ -29,7 +29,7 @@ export default function Login() {
     try {
       await login(data);
       toast.success("Login successful");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
     } finally {
