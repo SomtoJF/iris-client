@@ -25,7 +25,8 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = tabFromSearchParams(searchParams);
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);
-  const [isResumeUploadDialogOpen, setIsResumeUploadDialogOpen] = useState(false);
+  const [isResumeUploadDialogOpen, setIsResumeUploadDialogOpen] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleTabChange = (value: string) => {
@@ -55,7 +56,7 @@ export default function Home() {
   };
   return (
     <>
-      <div className="bg-gray-50 text-gray-800 w-screen h-screen px-10 py-10">
+      <div className="bg-gray-50 text-gray-800 w-full px-10 py-10">
         <header>
           <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight text-balance">
             Apply To Custom Job
