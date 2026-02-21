@@ -13,6 +13,7 @@ export interface Resume {
 export async function fetchResumes(): Promise<Resume[]> {
   const response = await fetch(`${BaseRoute}/resumes`, {
     method: "GET",
+    credentials: "include",
   });
   const res = await response.json();
   if (response.status !== 200) {
@@ -24,6 +25,7 @@ export async function fetchResumes(): Promise<Resume[]> {
 export async function setResumeAsActive(id: string): Promise<void> {
   const response = await fetch(`${BaseRoute}/resumes/${id}/activate`, {
     method: "PUT",
+    credentials: "include",
   });
   const res = await response.json();
   if (response.status !== 200) {

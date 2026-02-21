@@ -27,6 +27,7 @@ export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
   });
   const res = await response.json();
   if (response.status > 299) {
@@ -40,6 +41,7 @@ export async function fetchAllJobApplications(page: number, limit: number): Prom
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   const response = await fetch(`${BaseRoute}/jobs?${params}`, {
     method: "GET",
+    credentials: "include",
   });
   const res = await response.json();
   if (response.status !== 200) {
