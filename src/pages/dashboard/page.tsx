@@ -2,6 +2,7 @@ import CustomJobDialog from "@/components/custom/CustomJobDialog";
 import ResumeUploadDialog from "@/components/custom/ResumeUploadDialog";
 import { Button } from "@/components/ui/button";
 import { applyToJob, type jobApplicationSchema } from "@/services/job";
+import { uploadResume } from "@/services/resume";
 import { Send, Upload } from "lucide-react";
 import { useState } from "react";
 import z from "zod";
@@ -50,9 +51,18 @@ export default function Dashboard() {
     }
   };
 
-  const handleResumeUploadSubmit = (file: File) => {
-    // Template handler - will implement upload logic later
-    console.log("Resume upload:", file);
+  const handleResumeUploadSubmit = async (file: File) => {
+    try {
+      setIsLoading(true);
+      await uploadResume(file);
+      toast.success("Resume uploaded successfully");
+      setIsResumeUploadDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload resume");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <>
@@ -122,6 +132,7 @@ export default function Dashboard() {
         open={isResumeUploadDialogOpen}
         onOpenChange={setIsResumeUploadDialogOpen}
         onSubmit={handleResumeUploadSubmit}
+        isLoading={isLoading}
       />
     </>
   );

@@ -10,24 +10,28 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, Trash2, Download } from "lucide-react";
-import { fetchResumes, setResumeAsActive, type Resume } from "@/services/resume";
+import { fetchResumes, setResumeAsActive, deleteResume, getResumeDownloadUrl, type Resume } from "@/services/resume";
 import { toast } from "@/hooks/toast";
 
 interface ResumeUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (file: File) => void;
+  isLoading?: boolean;
 }
 
 export default function ResumeUploadDialog({
   open,
   onOpenChange,
   onSubmit,
+  isLoading: externalLoading = false,
 }: ResumeUploadDialogProps) {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const loading = isLoading || externalLoading;
 
   useEffect(() => {
     if (open) {
@@ -52,8 +56,13 @@ export default function ResumeUploadDialog({
     if (!file) return;
 
     // Validate file type
-    if (file.type !== "application/pdf") {
-      toast.error("Only PDF files are allowed");
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only PDF, DOC, and DOCX files are allowed");
       return;
     }
 
@@ -85,15 +94,14 @@ export default function ResumeUploadDialog({
     handleFileSelect(file);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!selectedFile) return;
 
-    // Template handler - just log for now
-    console.log("Uploading file:", selectedFile);
-    onSubmit(selectedFile);
+    await onSubmit(selectedFile);
 
-    // Reset
+    // Reset and reload
     setSelectedFile(null);
+    await loadResumes();
   }
 
   async function handleSetActive(id: string) {
@@ -110,17 +118,34 @@ export default function ResumeUploadDialog({
     }
   }
 
-  function handleDownload(url: string, fileName: string) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
+  async function handleDownload(id: string, fileName: string) {
+    try {
+      setIsLoading(true);
+      const url = await getResumeDownloadUrl(id);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to download resume");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function handleDelete(id: string) {
-    // Template handler - just log for now
-    console.log("Deleting resume:", id);
-    toast.success("Delete functionality coming soon");
+  async function handleDelete(id: string) {
+    try {
+      setIsLoading(true);
+      await deleteResume(id);
+      toast.success("Resume deleted successfully");
+      await loadResumes();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete resume");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function formatFileSize(bytes: number): string {
@@ -135,7 +160,7 @@ export default function ResumeUploadDialog({
         <DialogHeader>
           <DialogTitle>Upload Resume</DialogTitle>
           <DialogDescription>
-            Upload your resume in PDF format (max 2MB). You can manage your
+            Upload your resume in PDF, DOC, or DOCX format (max 2MB). You can manage your
             existing resumes below.
           </DialogDescription>
         </DialogHeader>
@@ -169,7 +194,7 @@ export default function ResumeUploadDialog({
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={resume.isActive || isLoading}
+                    disabled={resume.isActive || loading}
                     onClick={() => handleSetActive(resume.id)}
                   >
                     Set Active
@@ -177,13 +202,15 @@ export default function ResumeUploadDialog({
                   <Button
                     size="icon-sm"
                     variant="outline"
-                    onClick={() => handleDownload(resume.url, resume.fileName)}
+                    disabled={loading}
+                    onClick={() => handleDownload(resume.id, resume.fileName)}
                   >
                     <Download className="w-4 h-4" />
                   </Button>
                   <Button
                     size="icon-sm"
                     variant="outline"
+                    disabled={loading}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     onClick={() => handleDelete(resume.id)}
                   >
@@ -210,13 +237,13 @@ export default function ResumeUploadDialog({
           <input
             id="file-input"
             type="file"
-            accept=".pdf"
+            accept=".pdf,.doc,.docx"
             className="hidden"
             onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
           />
           <Upload className="w-10 h-10 mx-auto mb-2 text-gray-400" />
           <p className="text-sm text-gray-600">
-            Click or drag PDF (max 2MB)
+            Click or drag PDF/DOC/DOCX (max 2MB)
           </p>
           {selectedFile && (
             <p className="text-xs text-purple-600 mt-2">
@@ -233,7 +260,7 @@ export default function ResumeUploadDialog({
           </DialogClose>
           <Button
             type="button"
-            disabled={!selectedFile}
+            disabled={!selectedFile || loading}
             onClick={handleSubmit}
           >
             Upload
