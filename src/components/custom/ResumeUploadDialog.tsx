@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, Trash2, Download } from "lucide-react";
-import { fetchResumes, setResumeAsActive, deleteResume, getResumeDownloadUrl, type Resume } from "@/services/resume";
+import {
+  fetchResumes,
+  setResumeAsActive,
+  deleteResume,
+  getResumeDownloadUrl,
+  type Resume,
+} from "@/services/resume";
 import { toast } from "@/hooks/toast";
 
 interface ResumeUploadDialogProps {
@@ -97,7 +103,15 @@ export default function ResumeUploadDialog({
   async function handleSubmit() {
     if (!selectedFile) return;
 
-    await onSubmit(selectedFile);
+    try {
+      await onSubmit(selectedFile);
+    } catch (
+      err
+      // do nothing
+    ) {
+    } finally {
+      setSelectedFile(null);
+    }
 
     // Reset and reload
     setSelectedFile(null);
@@ -160,8 +174,8 @@ export default function ResumeUploadDialog({
         <DialogHeader>
           <DialogTitle>Upload Resume</DialogTitle>
           <DialogDescription>
-            Upload your resume in PDF, DOC, or DOCX format (max 2MB). You can manage your
-            existing resumes below.
+            Upload your resume in PDF, DOC, or DOCX format (max 2MB). You can
+            manage your existing resumes below.
           </DialogDescription>
         </DialogHeader>
 
@@ -247,7 +261,8 @@ export default function ResumeUploadDialog({
           </p>
           {selectedFile && (
             <p className="text-xs text-purple-600 mt-2">
-              Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)})
+              Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)}
+              )
             </p>
           )}
         </div>
