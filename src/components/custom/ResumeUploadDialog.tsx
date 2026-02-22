@@ -9,7 +9,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Trash2, Download } from "lucide-react";
+import { Upload, Trash2, Download, Loader2 } from "lucide-react";
 import {
   fetchResumes,
   setResumeAsActive,
@@ -270,7 +270,13 @@ export default function ResumeUploadDialog({
             disabled={!selectedFile || loading}
             onClick={handleSubmit}
           >
-            Upload
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-1" /> Uploading
+              </>
+            ) : (
+              "Upload"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
