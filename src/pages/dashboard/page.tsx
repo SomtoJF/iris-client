@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchJobsTab from "@/components/custom/SearchJobsTab";
 import OngoingApplicationsTab from "@/components/custom/OngoingApplicationsTab";
 import { useSearchParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/querykeyfactory";
 
 const TAB_VALUES = ["search-jobs", "ongoing-applications"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
@@ -29,6 +31,7 @@ export default function Dashboard() {
   const [isResumeUploadDialogOpen, setIsResumeUploadDialogOpen] =
     useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
@@ -43,6 +46,9 @@ export default function Dashboard() {
       setIsLoading(true);
       await applyToJob(data);
       toast.success("Job application initiated");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
     } catch (error) {
       console.error(error);
       toast.error("Failed to apply to job");

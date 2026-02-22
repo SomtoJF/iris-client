@@ -1,5 +1,7 @@
 import { fetchAllJobApplications, type JobApplication } from "@/services/job";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import jobApplicationKeys from "@/querykeyfactory/jobapplication.keys";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Loader2, CheckCircle2, X } from "lucide-react";
@@ -98,27 +100,16 @@ const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
 ];
 
 export default function OngoingApplicationsTab() {
-  const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
-  const [total, setTotal] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    handleFetchJobApplications();
-  }, [pageIndex]);
+  const page = pageIndex + 1;
+  const { data, isFetching } = useQuery({
+    queryKey: jobApplicationKeys.list({ page, limit: LIMIT }),
+    queryFn: () => fetchAllJobApplications(page, LIMIT),
+  });
 
-  const handleFetchJobApplications = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetchAllJobApplications(pageIndex + 1, LIMIT);
-      setJobApplications(res.data);
-      setTotal(res.total);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const jobApplications = data?.data ?? [];
+  const total = data?.total ?? 0;
 
   const handlePageChange = (newPageIndex: number) => {
     setPageIndex(newPageIndex);
@@ -133,7 +124,7 @@ export default function OngoingApplicationsTab() {
       total,
       onPageChange: handlePageChange,
     },
-    loading: isLoading,
+    loading: isFetching,
   };
 
   return (
