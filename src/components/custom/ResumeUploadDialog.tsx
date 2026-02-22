@@ -103,15 +103,7 @@ export default function ResumeUploadDialog({
   async function handleSubmit() {
     if (!selectedFile) return;
 
-    try {
-      await onSubmit(selectedFile);
-    } catch (
-      err
-      // do nothing
-    ) {
-    } finally {
-      setSelectedFile(null);
-    }
+    await onSubmit(selectedFile);
 
     // Reset and reload
     setSelectedFile(null);
