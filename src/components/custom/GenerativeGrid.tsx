@@ -72,7 +72,7 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                   return (
                     <TableHead
                       key={header.id}
-                      style={width ? { width } : undefined}
+                      style={width ? { width, maxWidth: width } : undefined}
                     >
                       {header.isPlaceholder
                         ? null
@@ -93,7 +93,7 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                   {columns.map((column, colIndex) => (
                     <TableCell
                       key={`skeleton-${index}-${colIndex}`}
-                      style={column.width ? { width: column.width } : undefined}
+                      style={column.width ? { width: column.width, maxWidth: column.width } : undefined}
                     >
                       {column.shimmer ? (
                         column.shimmer()
@@ -117,7 +117,7 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                     return (
                       <TableCell
                         key={cell.id}
-                        style={width ? { width } : undefined}
+                        style={width ? { width, maxWidth: width } : undefined}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

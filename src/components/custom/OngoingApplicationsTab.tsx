@@ -60,10 +60,10 @@ const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
         href={row.original.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer inline-flex items-center gap-2 truncate"
+        className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-2 max-w-full"
       >
-        {row.original.url}
-        <ExternalLink className="w-4 h-4" />
+        <span className="truncate">{row.original.url}</span>
+        <ExternalLink className="w-4 h-4 flex-shrink-0" />
       </a>
     ),
     shimmer: () => <Skeleton className="h-4 w-64" />,
