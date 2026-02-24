@@ -10,6 +10,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import type { LucideIcon } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { GenerativeGrid, type TableConfig } from "./GenerativeGrid";
+import { cn } from "@/lib/utils";
 
 dayjs.extend(relativeTime);
 
@@ -53,8 +54,34 @@ const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
   width?: string;
 })[] = [
   {
+    accessorKey: "jobTitle",
+    header: "Job Title",
+    cell: ({ row }) => (
+      <span
+        className={cn(
+          "truncate text-black",
+          row.original.jobTitle.toLowerCase().startsWith("pending") &&
+            "bg-yellow-200",
+        )}
+      >
+        {row.original.jobTitle}
+      </span>
+    ),
+    shimmer: () => <Skeleton className="h-4 w-64" />,
+    width: "300px",
+  },
+  {
+    accessorKey: "companyName",
+    header: "Company Name",
+    cell: ({ row }) => (
+      <span className="truncate text-black">{row.original.companyName}</span>
+    ),
+    shimmer: () => <Skeleton className="h-4 w-64" />,
+    width: "200px",
+  },
+  {
     accessorKey: "url",
-    header: "Job URL",
+    header: "Link",
     cell: ({ row }) => (
       <a
         href={row.original.url}
@@ -62,12 +89,12 @@ const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
         rel="noopener noreferrer"
         className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-2 max-w-full"
       >
-        <span className="truncate">{row.original.url}</span>
+        <span className="truncate">External Link</span>
         <ExternalLink className="w-4 h-4 flex-shrink-0" />
       </a>
     ),
     shimmer: () => <Skeleton className="h-4 w-64" />,
-    width: "400px",
+    width: "200px",
   },
   {
     accessorKey: "status",
@@ -88,7 +115,7 @@ const jobApplicationColumns: (ColumnDef<JobApplication, any> & {
   },
   {
     accessorKey: "createdAt",
-    header: "Applied",
+    header: "Date Applied",
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground">
         {dayjs(row.original.createdAt).fromNow()}
