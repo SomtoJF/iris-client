@@ -10,6 +10,7 @@ import Dashboard from "./pages/dashboard/page";
 import { ProtectedLayout } from "./layout/ProtectedLayout";
 import { AuthLayout } from "./layout/AuthLayout";
 import ResumeOnboardingPage from "./pages/onboarding/resume/page";
+import ApplicationOnboardingPage from "./pages/onboarding/application/page";
 
 function App() {
   const queryClient = new QueryClient();
@@ -29,6 +30,10 @@ function App() {
             <Route
               path="/onboarding/resume"
               element={<ResumeOnboardingPage />}
+            />
+            <Route
+              path="/onboarding/application"
+              element={<ApplicationOnboardingPage />}
             />
 
             <Route element={<ProtectedLayout />}>
