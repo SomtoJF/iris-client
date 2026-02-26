@@ -30,8 +30,12 @@ export function ProtectedLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  if (!user.isResumeOnboardingComplete) {
+    return <Navigate to="/onboarding/resume" replace />;
+  }
+
   if (!user.isOnboardingComplete) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/onboarding/application" replace />;
   }
 
   return <Outlet />;
