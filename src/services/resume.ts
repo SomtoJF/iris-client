@@ -33,9 +33,10 @@ export async function setResumeAsActive(id: string): Promise<void> {
   }
 }
 
-export async function uploadResume(file: File): Promise<Resume> {
+export async function uploadResume(file: File, processResume: boolean = false): Promise<Resume> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("processResume", processResume.toString());
 
   const response = await fetch(`${BaseRoute}/resumes`, {
     method: "POST",

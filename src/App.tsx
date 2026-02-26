@@ -7,8 +7,9 @@ import Login from "./pages/login/page";
 import Signup from "./pages/signup/page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Dashboard from "./pages/dashboard/page";
-import { ProtectedLayout } from "./components/layout/ProtectedLayout";
-import { AuthLayout } from "./components/layout/AuthLayout";
+import { ProtectedLayout } from "./layout/ProtectedLayout";
+import { AuthLayout } from "./layout/AuthLayout";
+import ResumeOnboardingPage from "./pages/onboarding/resume/page";
 
 function App() {
   const queryClient = new QueryClient();
@@ -24,6 +25,11 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
             </Route>
+
+            <Route
+              path="/onboarding/resume"
+              element={<ResumeOnboardingPage />}
+            />
 
             <Route element={<ProtectedLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />

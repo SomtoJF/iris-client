@@ -47,11 +47,14 @@ export async function signup(data: z.infer<typeof signupSchema>) {
 
 export interface User {
   id: string;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  CreatedAt: string;
-  UpdatedAt: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  isOnboardingComplete: boolean;
+  isResumeOnboardingComplete: boolean;
 }
 
 export async function getCurrentUser(): Promise<User> {
