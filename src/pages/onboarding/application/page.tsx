@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Field,
   FieldError,
@@ -20,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2, X } from "lucide-react";
 import { CircleFlag } from "react-circle-flags";
@@ -71,11 +78,23 @@ function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
   );
 }
 
+const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
+  1: ["firstName", "lastName", "email", "phone", "dateOfBirth", "gender"],
+  2: ["address", "city", "state", "zip", "countryOfResidence"],
+  3: ["countriesOfCitizenship", "isVeteran"],
+};
+
 export default function ApplicationOnboardingPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stepErrors, setStepErrors] = useState<
+    Partial<Record<keyof JobApplicationProfileFormValues, string>>
+  >({});
+  const [firstErrorFieldToFocus, setFirstErrorFieldToFocus] = useState<
+    string | null
+  >(null);
 
   const form = useForm({
     defaultValues: defaultFormValues,
@@ -129,84 +148,73 @@ export default function ApplicationOnboardingPage() {
     };
   }, []);
 
-  const validateCurrentStep = (): boolean => {
+  useEffect(() => {
+    if (!firstErrorFieldToFocus) return;
+    const wrapper = document.querySelector(
+      `[data-field="${firstErrorFieldToFocus}"]`,
+    );
+    const focusable = wrapper?.querySelector<HTMLElement>(
+      "input, button, [role='combobox']",
+    );
+    focusable?.focus();
+    setFirstErrorFieldToFocus(null);
+  }, [firstErrorFieldToFocus]);
+
+  const validateCurrentStep = (): {
+    valid: boolean;
+    firstErrorField?: keyof JobApplicationProfileFormValues;
+    errors?: Partial<Record<keyof JobApplicationProfileFormValues, string>>;
+  } => {
     const value = form.state.values;
-    if (currentStep === 1) {
-      const stepSchema = jobApplicationProfileSchema.pick({
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        dateOfBirth: true,
-        gender: true,
-      });
-      const r = stepSchema.safeParse(value);
-      if (!r.success) {
-        const err = r.error.flatten().fieldErrors;
-        Object.entries(err).forEach(([k, v]) => {
-          form.setFieldMeta(
-            k as keyof JobApplicationProfileFormValues,
-            (prev) => ({
-              ...prev,
-              error: v?.[0],
-            }),
-          );
-        });
-        return false;
+    const stepFieldNames = STEP_FIELDS[currentStep];
+    if (!stepFieldNames) return { valid: true };
+
+    const pickShape = stepFieldNames.reduce(
+      (acc, name) => ({ ...acc, [name]: true as const }),
+      {} as Partial<Record<keyof JobApplicationProfileFormValues, true>>,
+    );
+    const stepSchema = jobApplicationProfileSchema.pick(
+      pickShape as Record<keyof typeof jobApplicationProfileSchema.shape, true>,
+    );
+    const r = stepSchema.safeParse(value);
+
+    if (r.success) {
+      return { valid: true };
+    }
+
+    const err = r.error.flatten().fieldErrors as Partial<
+      Record<keyof JobApplicationProfileFormValues, string[]>
+    >;
+    const errors: Partial<
+      Record<keyof JobApplicationProfileFormValues, string>
+    > = {};
+    let firstErrorField: keyof JobApplicationProfileFormValues | undefined;
+    for (const name of stepFieldNames) {
+      const msg = err[name]?.[0];
+      if (msg) {
+        errors[name] = msg;
+        if (firstErrorField === undefined) firstErrorField = name;
       }
     }
-    if (currentStep === 2) {
-      const stepSchema = jobApplicationProfileSchema.pick({
-        address: true,
-        city: true,
-        state: true,
-        zip: true,
-        countryOfResidence: true,
-      });
-      const r = stepSchema.safeParse(value);
-      if (!r.success) {
-        const err = r.error.flatten().fieldErrors;
-        Object.entries(err).forEach(([k, v]) => {
-          form.setFieldMeta(
-            k as keyof JobApplicationProfileFormValues,
-            (prev) => ({
-              ...prev,
-              error: v?.[0],
-            }),
-          );
-        });
-        return false;
-      }
-    }
-    if (currentStep === 3) {
-      const stepSchema = jobApplicationProfileSchema.pick({
-        countriesOfCitizenship: true,
-        isVeteran: true,
-      });
-      const r = stepSchema.safeParse(value);
-      if (!r.success) {
-        const err = r.error.flatten().fieldErrors;
-        Object.entries(err).forEach(([k, v]) => {
-          form.setFieldMeta(
-            k as keyof JobApplicationProfileFormValues,
-            (prev) => ({
-              ...prev,
-              error: v?.[0],
-            }),
-          );
-        });
-        return false;
-      }
-    }
-    return true;
+    return { valid: false, firstErrorField, errors };
   };
 
   const handleNext = () => {
-    if (validateCurrentStep())
+    const result = validateCurrentStep();
+    if (result.valid) {
+      setStepErrors({});
       setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS));
+      return;
+    }
+    if (result.errors) setStepErrors(result.errors);
+    if (result.firstErrorField)
+      setFirstErrorFieldToFocus(result.firstErrorField);
   };
 
-  const handleBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
+  const handleBack = () => {
+    setStepErrors({});
+    setCurrentStep((s) => Math.max(s - 1, 1));
+  };
 
   if (isLoadingProfile) {
     return (
@@ -225,9 +233,26 @@ export default function ApplicationOnboardingPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Job application profile</CardTitle>
-            <p className="text-muted-foreground text-sm">
-              Step {currentStep} of {TOTAL_STEPS}
-            </p>
+            <CardDescription>
+              We use this information to automatically complete job applications
+              on your behalf. Please answer the following common questions to
+              finish your profile.
+            </CardDescription>
+            <div
+              className="h-2 w-full overflow-hidden rounded-full bg-muted mt-2"
+              role="progressbar"
+              aria-valuenow={currentStep}
+              aria-valuemin={1}
+              aria-valuemax={TOTAL_STEPS}
+              aria-label={`Step ${currentStep} of ${TOTAL_STEPS}`}
+            >
+              <div
+                className="h-full rounded-full bg-purple-500 transition-[width] duration-300 ease-out"
+                style={{
+                  width: `${(currentStep / TOTAL_STEPS) * 100}%`,
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <form
@@ -246,41 +271,82 @@ export default function ApplicationOnboardingPage() {
                 <FieldGroup className="space-y-4">
                   <form.Field name="firstName">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="firstName"
+                        data-invalid={
+                          !!(
+                            stepErrors.firstName ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>First name</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="Jane"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.firstName ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.firstName
+                              ? [{ message: stepErrors.firstName }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="lastName">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="lastName"
+                        data-invalid={
+                          !!(
+                            stepErrors.lastName ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Last name</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="Doe"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.lastName ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.lastName
+                              ? [{ message: stepErrors.lastName }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="email">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="email"
+                        data-invalid={
+                          !!(
+                            stepErrors.email ?? field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Email</FieldTitle>
                         <Input
                           type="email"
@@ -288,51 +354,100 @@ export default function ApplicationOnboardingPage() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="jane@example.com"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.email ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.email
+                              ? [{ message: stepErrors.email }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="phone">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="phone"
+                        data-invalid={
+                          !!(
+                            stepErrors.phone ?? field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Phone</FieldTitle>
                         <PhoneInput
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="+1 234 567 8900"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.phone ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.phone
+                              ? [{ message: stepErrors.phone }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="dateOfBirth">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="dateOfBirth"
+                        data-invalid={
+                          !!(
+                            stepErrors.dateOfBirth ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Date of birth</FieldTitle>
                         <Input
                           type="date"
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.dateOfBirth ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.dateOfBirth
+                              ? [{ message: stepErrors.dateOfBirth }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="gender">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="gender"
+                        data-invalid={
+                          !!(
+                            stepErrors.gender ?? field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Gender</FieldTitle>
                         <Select
                           value={field.state.value}
@@ -350,7 +465,11 @@ export default function ApplicationOnboardingPage() {
                           </SelectContent>
                         </Select>
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.gender
+                              ? [{ message: stepErrors.gender }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
@@ -362,75 +481,142 @@ export default function ApplicationOnboardingPage() {
                 <FieldGroup className="space-y-4">
                   <form.Field name="address">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="address"
+                        data-invalid={
+                          !!(
+                            stepErrors.address ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Address</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="123 Main St"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.address ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.address
+                              ? [{ message: stepErrors.address }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="city">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="city"
+                        data-invalid={
+                          !!(stepErrors.city ?? field.state.meta.errors?.length)
+                        }
+                      >
                         <FieldTitle>City</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="New York"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.city ?? field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.city
+                              ? [{ message: stepErrors.city }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="state">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="state"
+                        data-invalid={
+                          !!(
+                            stepErrors.state ?? field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>State / Province</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="NY"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.state ??
+                              field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.state
+                              ? [{ message: stepErrors.state }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="zip">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="zip"
+                        data-invalid={
+                          !!(stepErrors.zip ?? field.state.meta.errors?.length)
+                        }
+                      >
                         <FieldTitle>ZIP / Postal code</FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           placeholder="10001"
-                          aria-invalid={!!field.state.meta.errors?.length}
+                          aria-invalid={
+                            !!(
+                              stepErrors.zip ?? field.state.meta.errors?.length
+                            )
+                          }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.zip
+                              ? [{ message: stepErrors.zip }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
                   </form.Field>
                   <form.Field name="countryOfResidence">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <Field
+                        data-field="countryOfResidence"
+                        data-invalid={
+                          !!(
+                            stepErrors.countryOfResidence ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
                         <FieldTitle>Country of residence</FieldTitle>
                         <CountryDropdown
                           key={field.state.value || "residence"}
@@ -441,7 +627,11 @@ export default function ApplicationOnboardingPage() {
                           }
                         />
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.countryOfResidence
+                              ? [{ message: stepErrors.countryOfResidence }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
@@ -455,7 +645,15 @@ export default function ApplicationOnboardingPage() {
                     {(field) => {
                       const list = field.state.value ?? [];
                       return (
-                        <Field data-invalid={!!field.state.meta.errors?.length}>
+                        <Field
+                          data-field="countriesOfCitizenship"
+                          data-invalid={
+                            !!(
+                              stepErrors.countriesOfCitizenship ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        >
                           <FieldTitle>Countries of citizenship</FieldTitle>
                           <div className="space-y-2">
                             {list.map((code: string, idx: number) => {
@@ -510,7 +708,16 @@ export default function ApplicationOnboardingPage() {
                             />
                           </div>
                           <FieldError
-                            errors={toFieldErrors(field.state.meta.errors)}
+                            errors={
+                              stepErrors.countriesOfCitizenship
+                                ? [
+                                    {
+                                      message:
+                                        stepErrors.countriesOfCitizenship,
+                                    },
+                                  ]
+                                : toFieldErrors(field.state.meta.errors)
+                            }
                           />
                         </Field>
                       );
@@ -518,27 +725,55 @@ export default function ApplicationOnboardingPage() {
                   </form.Field>
                   <form.Field name="isVeteran">
                     {(field) => (
-                      <Field data-invalid={!!field.state.meta.errors?.length}>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id="isVeteran"
-                            checked={field.state.value}
-                            onChange={(e) =>
-                              field.handleChange(e.target.checked)
-                            }
-                            onBlur={field.handleBlur}
-                            className="h-4 w-4 rounded border-input"
-                          />
-                          <label
-                            htmlFor="isVeteran"
-                            className="text-sm font-medium cursor-pointer"
-                          >
-                            I am a veteran
-                          </label>
-                        </div>
+                      <Field
+                        data-field="isVeteran"
+                        data-invalid={
+                          !!(
+                            stepErrors.isVeteran ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>I am a veteran</FieldTitle>
+                        <RadioGroup
+                          value={String(field.state.value)}
+                          onValueChange={(v) =>
+                            field.handleChange(v === "true")
+                          }
+                          onBlur={field.handleBlur}
+                          aria-invalid={
+                            !!(
+                              stepErrors.isVeteran ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                          className="flex flex-row gap-4"
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem value="true" id="isVeteran-yes" />
+                            <label
+                              htmlFor="isVeteran-yes"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              Yes
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem value="false" id="isVeteran-no" />
+                            <label
+                              htmlFor="isVeteran-no"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              No
+                            </label>
+                          </div>
+                        </RadioGroup>
                         <FieldError
-                          errors={toFieldErrors(field.state.meta.errors)}
+                          errors={
+                            stepErrors.isVeteran
+                              ? [{ message: stepErrors.isVeteran }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
                         />
                       </Field>
                     )}
