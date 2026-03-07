@@ -28,8 +28,8 @@ function getStatusTagConfig(status: JobStatus): {
   switch (status) {
     case "applied":
       return {
-        textStyles: "text-green-400",
-        iconStyles: "bg-green-400 opacity-50",
+        textStyles: "text-green-600",
+        iconStyles: "bg-green-600 opacity-50",
       };
     case "processing":
       return {
