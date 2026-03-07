@@ -93,7 +93,11 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                   {columns.map((column, colIndex) => (
                     <TableCell
                       key={`skeleton-${index}-${colIndex}`}
-                      style={column.width ? { width: column.width, maxWidth: column.width } : undefined}
+                      style={
+                        column.width
+                          ? { width: column.width, maxWidth: column.width }
+                          : undefined
+                      }
                     >
                       {column.shimmer ? (
                         column.shimmer()

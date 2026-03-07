@@ -39,8 +39,9 @@ export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
 }
 
 
-export async function fetchAllJobApplications(page: number, limit: number): Promise<FetchAllJobApplicationsResponse> {
+export async function fetchAllJobApplications(page: number, limit: number, search?: string): Promise<FetchAllJobApplicationsResponse> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search) params.set("search", search);
   const response = await fetch(`${BaseRoute}/jobs?${params}`, {
     method: "GET",
     credentials: "include",
@@ -50,4 +51,15 @@ export async function fetchAllJobApplications(page: number, limit: number): Prom
     throw new Error(res.error ?? "Failed to fetch job applications");
   }
   return res.data;
+}
+
+export async function retryJobApplication(id: string): Promise<void> {
+  const response = await fetch(`${BaseRoute}/jobs/${id}/retry-application`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status > 299) {
+    throw new Error(res.error ?? "Failed to retry job application");
+  }
 }
