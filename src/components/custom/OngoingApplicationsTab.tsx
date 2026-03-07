@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRealtimeEvents } from "@/context/RealTimeEventContext";
+import { toast } from "@/hooks/toast";
 
 dayjs.extend(relativeTime);
 
@@ -158,7 +160,7 @@ function buildColumns(
       header: "Date Applied",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {dayjs(row.original.createdAt).fromNow()}
+          {dayjs(row.original.updatedAt).fromNow()}
         </span>
       ),
       shimmer: () => <Skeleton className="h-4 w-20" />,
@@ -177,11 +179,42 @@ export default function OngoingApplicationsTab() {
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const { addEventListener } = useRealtimeEvents();
 
-  function handleSearch() {
-    setActiveSearch(searchInput);
-    setPageIndex(0);
-  }
+  useEffect(() => {
+    const applicationSuccessHandler = addEventListener(
+      "APPLICATION_SUCCESSFUL",
+      (data) => {
+        toast.success(
+          `Successfully applied to ${data.jobTitle} at ${data.companyName}`,
+        );
+        setJobApplications((prev) =>
+          prev.map((j) =>
+            j.id === data.id ? { ...j, status: "applied" as const } : j,
+          ),
+        );
+      },
+    );
+
+    const applicationFailedHandler = addEventListener(
+      "APPLICATION_FAILED",
+      (data) => {
+        toast.error(
+          `An application just failed for ${data.jobTitle} at ${data.companyName}`,
+        );
+        setJobApplications((prev) =>
+          prev.map((j) =>
+            j.id === data.id ? { ...j, status: "failed" as const } : j,
+          ),
+        );
+      },
+    );
+
+    return () => {
+      applicationSuccessHandler();
+      applicationFailedHandler();
+    };
+  }, [addEventListener]);
 
   const loadApplications = useCallback(async () => {
     setIsFetching(true);
@@ -230,6 +263,11 @@ export default function OngoingApplicationsTab() {
         return s;
       });
     }
+  }
+
+  function handleSearch() {
+    setActiveSearch(searchInput);
+    setPageIndex(0);
   }
 
   async function handleRetryAll() {
