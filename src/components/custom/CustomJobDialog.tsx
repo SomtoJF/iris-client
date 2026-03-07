@@ -42,7 +42,7 @@ export default function CustomJobDialog({
             <DialogTitle>Apply to job</DialogTitle>
             <DialogDescription>
               Enter the job posting URL to start your application. We&apos;ll
-              open the page and automatically apply to the job.
+              handle the rest.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
