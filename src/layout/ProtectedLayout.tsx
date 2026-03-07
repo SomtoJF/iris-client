@@ -3,6 +3,7 @@ import { useFetchCurrentUser } from "@/hooks/user";
 import { useUserStore } from "@/zustand/userstore";
 import { Loader } from "lucide-react";
 import { useEffect } from "react";
+import Navbar from "@/components/custom/Navbar";
 
 export function ProtectedLayout() {
   const { user, isFetching, isPending } = useFetchCurrentUser();
@@ -38,5 +39,10 @@ export function ProtectedLayout() {
     return <Navigate to="/onboarding/application" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <div className="w-full">
+      <Navbar />
+      <Outlet />
+    </div>
+  );
 }
