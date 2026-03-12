@@ -11,6 +11,9 @@ import { ProtectedLayout } from "./layout/ProtectedLayout";
 import { AuthLayout } from "./layout/AuthLayout";
 import ResumeOnboardingPage from "./pages/onboarding/resume/page";
 import ApplicationOnboardingPage from "./pages/onboarding/application/page";
+import SettingsLayout from "./layout/SettingsLayout";
+import ApplicationProfile from "./pages/settings/application-profile/ApplicationProfile";
+import Account from "./pages/settings/account/Account";
 
 function App() {
   const queryClient = new QueryClient();
@@ -38,6 +41,14 @@ function App() {
 
             <Route element={<ProtectedLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route
+                path="application-profile"
+                element={<ApplicationProfile />}
+              />
+              <Route path="account" element={<Account />} />
             </Route>
           </Routes>
         </RealtimeEventProvider>

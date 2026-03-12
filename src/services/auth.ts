@@ -57,6 +57,29 @@ export interface User {
   isResumeOnboardingComplete: boolean;
 }
 
+export const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters").max(20, "Password must be at most 20 characters"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters").max(20, "Password must be at most 20 characters"),
+  confirmNewPassword: z.string().min(8, "Password must be at least 8 characters").max(20, "Password must be at most 20 characters"),
+}).refine((d) => d.newPassword === d.confirmNewPassword, {
+  message: "Passwords don't match",
+  path: ["confirmNewPassword"],
+});
+
+export async function resetPassword(data: { password: string; newPassword: string }) {
+  const response = await fetch(`${BaseRoute}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status > 299) {
+    throw new Error(res.error ?? "Failed to reset password");
+  }
+  return res;
+}
+
 export async function getCurrentUser(): Promise<User> {
   const response = await fetch(`${BaseRoute}/me`, {
     method: "GET",

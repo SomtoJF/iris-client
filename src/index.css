@@ -1,4 +1,7 @@
 /* Minimal base; design system (Tailwind + shadcn) is in App.css */
+html {
+  overflow-y: hidden;
+}
 body {
   margin: 0;
   min-width: 320px;

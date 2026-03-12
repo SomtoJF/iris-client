@@ -1,0 +1,537 @@
+import { useState, useEffect } from "react";
+import { useForm } from "@tanstack/react-form";
+import { toast } from "sonner";
+import { Loader2, X } from "lucide-react";
+import { CircleFlag } from "react-circle-flags";
+import { countries } from "country-data-list";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldTitle,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CountryDropdown } from "@/components/ui/country-dropdown";
+import type { Country } from "@/components/ui/country-dropdown";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import {
+  getJobApplicationProfile,
+  patchJobApplicationProfile,
+  jobApplicationProfileSchema,
+  type JobApplicationProfileFormValues,
+} from "@/services/jobApplicationProfile";
+
+const GENDER_OPTIONS = [
+  { value: "female", label: "Female" },
+  { value: "male", label: "Male" },
+  { value: "non_binary", label: "Non-binary" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+const defaultFormValues: JobApplicationProfileFormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  address: "",
+  city: "",
+  state: "",
+  zip: "",
+  countryOfResidence: "",
+  isVeteran: false,
+  countriesOfCitizenship: [],
+  gender: "",
+  dateOfBirth: "",
+};
+
+const countryList = countries.all.filter(
+  (c: Country) => c.emoji && c.status !== "deleted" && c.ioc !== "PRK",
+);
+
+function getCountryByAlpha3(alpha3: string): Country | undefined {
+  return countryList.find((c: Country) => c.alpha3 === alpha3);
+}
+
+function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
+  if (!Array.isArray(err)) return [];
+  return err.map((e) =>
+    typeof e === "string" ? { message: e } : (e as { message?: string }),
+  );
+}
+
+export default function ApplicationProfile() {
+  const [initialData, setInitialData] =
+    useState<JobApplicationProfileFormValues | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const profile = await getJobApplicationProfile();
+        if (cancelled) return;
+        const { id: _id, ...rest } = profile;
+        setInitialData({
+          ...rest,
+          dateOfBirth: profile.dateOfBirth?.slice(0, 10) ?? "",
+          countriesOfCitizenship: profile.countriesOfCitizenship ?? [],
+        });
+      } catch {
+        if (!cancelled) {
+          toast.error("Failed to load profile.");
+          setInitialData(defaultFormValues);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (isLoading || !initialData) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading profile...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <ProfileForm initialData={initialData} />;
+    </div>
+  );
+}
+
+function ProfileForm({
+  initialData,
+}: {
+  initialData: JobApplicationProfileFormValues;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm({
+    defaultValues: initialData,
+    onSubmit: async ({ value }) => {
+      const parsed = jobApplicationProfileSchema.safeParse(value);
+      if (!parsed.success) {
+        const first = parsed.error.flatten().fieldErrors;
+        const msg = Object.values(first).flat().find(Boolean) as
+          | string
+          | undefined;
+        toast.error(msg ?? "Please fix the form errors.");
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        await patchJobApplicationProfile(parsed.data);
+        toast.success("Profile updated successfully");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update profile",
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+  });
+
+  return (
+    <div className="max-w-2xl h-fit">
+      <h1 className="text-xl font-semibold mb-6">Application Profile</h1>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
+        }}
+        className="space-y-6"
+      >
+        {/* Personal Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>
+              Basic details used to fill out job applications.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="firstName">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>First name</FieldTitle>
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="Jane"
+                        disabled
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+                <form.Field name="lastName">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>Last name</FieldTitle>
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="Doe"
+                        disabled
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+              </div>
+
+              <form.Field name="email">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>Email</FieldTitle>
+                    <Input
+                      type="email"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="jane@example.com"
+                    />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="phone">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>Phone</FieldTitle>
+                    <PhoneInput
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="+1 234 567 8900"
+                    />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="dateOfBirth">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>Date of birth</FieldTitle>
+                      <Input
+                        type="date"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+
+                <form.Field name="gender">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>Gender</FieldTitle>
+                      <Select
+                        value={field.state.value}
+                        onValueChange={(v) => field.handleChange(v)}
+                        disabled
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GENDER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+              </div>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Address */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Address</CardTitle>
+            <CardDescription>Your current residential address.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="space-y-4">
+              <form.Field name="address">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>Address</FieldTitle>
+                    <Input
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="123 Main St"
+                    />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="city">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>City</FieldTitle>
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="New York"
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+
+                <form.Field name="state">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>State / Province</FieldTitle>
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="NY"
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="zip">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>ZIP / Postal code</FieldTitle>
+                      <Input
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="10001"
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+
+                <form.Field name="countryOfResidence">
+                  {(field) => (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>Country of residence</FieldTitle>
+                      <CountryDropdown
+                        key={field.state.value || "residence"}
+                        defaultValue={field.state.value || undefined}
+                        placeholder="Select country"
+                        onChange={(country: Country) =>
+                          field.handleChange(country.alpha3)
+                        }
+                      />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  )}
+                </form.Field>
+              </div>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Additional */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="space-y-4">
+              <form.Field name="countriesOfCitizenship">
+                {(field) => {
+                  const list = field.state.value ?? [];
+                  return (
+                    <Field data-invalid={!!field.state.meta.errors?.length}>
+                      <FieldTitle>Countries of citizenship</FieldTitle>
+                      <div className="space-y-2">
+                        {list.map((code: string, idx: number) => {
+                          const country = getCountryByAlpha3(code);
+                          return (
+                            <div
+                              key={`${code}-${idx}`}
+                              className="flex items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                            >
+                              {country ? (
+                                <>
+                                  <div className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                                    <CircleFlag
+                                      countryCode={country.alpha2.toLowerCase()}
+                                      height={20}
+                                    />
+                                  </div>
+                                  <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    {country.name}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="flex-1 text-muted-foreground">
+                                  {code}
+                                </span>
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label="Remove"
+                                onClick={() => {
+                                  const next = list.filter(
+                                    (_: string, i: number) => i !== idx,
+                                  );
+                                  field.handleChange(next);
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                        <CountryDropdown
+                          placeholder="Add country of citizenship"
+                          onChange={(country: Country) => {
+                            const code = country.alpha3;
+                            if (!list.includes(code)) {
+                              field.handleChange([...list, code]);
+                            }
+                          }}
+                        />
+                      </div>
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
+                    </Field>
+                  );
+                }}
+              </form.Field>
+
+              <form.Field name="isVeteran">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>Veteran status</FieldTitle>
+                    <RadioGroup
+                      value={String(field.state.value)}
+                      onValueChange={(v) => field.handleChange(v === "true")}
+                      onBlur={field.handleBlur}
+                      className="flex flex-row gap-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="true" id="isVeteran-yes" />
+                        <label
+                          htmlFor="isVeteran-yes"
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          Yes
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="false" id="isVeteran-no" />
+                        <label
+                          htmlFor="isVeteran-no"
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          No
+                        </label>
+                      </div>
+                    </RadioGroup>
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end pb-8">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}

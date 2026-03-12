@@ -54,6 +54,21 @@ export async function getJobApplicationProfile(): Promise<JobApplicationProfileR
   return res.data;
 }
 
+export async function patchJobApplicationProfile(
+  data: Partial<UpdateJobApplicationProfileRequest>
+): Promise<void> {
+  const response = await fetch(`${BaseRoute}/jobapplicationprofile`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const res = await response.json();
+  if (response.status !== 200) {
+    throw new Error(res.error ?? "Failed to update job application profile");
+  }
+}
+
 export async function upsertJobApplicationProfile(
   data: UpdateJobApplicationProfileRequest
 ): Promise<void> {
