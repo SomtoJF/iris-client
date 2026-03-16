@@ -15,7 +15,7 @@ export default function SettingsSidebar({ items }: SettingsSidebarProps) {
   const location = useLocation();
 
   return (
-    <aside className="w-48 h-screen border-r flex flex-col shrink-0">
+    <aside className="w-48 h-screen border-r flex flex-col shrink-0 fixed bg-inherit">
       <div className="px-4 pt-6 pb-2">
         <h2 className="text-sm font-semibold tracking-wide">Settings</h2>
       </div>
@@ -43,7 +43,7 @@ export default function SettingsSidebar({ items }: SettingsSidebarProps) {
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
                 isActive
                   ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
               {item.label}

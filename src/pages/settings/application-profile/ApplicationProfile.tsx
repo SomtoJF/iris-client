@@ -69,6 +69,32 @@ function getCountryByAlpha3(alpha3: string): Country | undefined {
   return countryList.find((c: Country) => c.alpha3 === alpha3);
 }
 
+function isFormDirty(
+  current: JobApplicationProfileFormValues,
+  initial: JobApplicationProfileFormValues,
+): boolean {
+  const a = [...(current.countriesOfCitizenship ?? [])].sort();
+  const b = [...(initial.countriesOfCitizenship ?? [])].sort();
+  if (a.length !== b.length || a.some((v, i) => v !== b[i])) return true;
+  const keys: (keyof JobApplicationProfileFormValues)[] = [
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "address",
+    "city",
+    "state",
+    "zip",
+    "countryOfResidence",
+    "isVeteran",
+    "gender",
+    "dateOfBirth",
+  ];
+  return keys.some(
+    (k) => String(current[k] ?? "") !== String(initial[k] ?? ""),
+  );
+}
+
 function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
   if (!Array.isArray(err)) return [];
   return err.map((e) =>
@@ -160,7 +186,13 @@ function ProfileForm({
 
   return (
     <div className="max-w-2xl h-fit">
-      <h1 className="text-xl font-semibold mb-6">Application Profile</h1>
+      <header className="mb-6 space-y-2">
+        <h1 className="text-xl font-semibold">Application Profile</h1>
+        <p className="text-sm text-muted-foreground">
+          We use this information to automatically complete job applications on
+          your behalf.
+        </p>
+      </header>
 
       <form
         onSubmit={(e) => {
@@ -174,9 +206,7 @@ function ProfileForm({
         <Card>
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
-            <CardDescription>
-              Basic details used to fill out job applications.
-            </CardDescription>
+            <CardDescription>Basic personal details.</CardDescription>
           </CardHeader>
           <CardContent>
             <FieldGroup className="space-y-4">
@@ -520,16 +550,26 @@ function ProfileForm({
         </Card>
 
         <div className="flex justify-end pb-8">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
+          <form.Subscribe selector={(state) => state.values}>
+            {(values) => {
+              const isDirty = isFormDirty(
+                values as JobApplicationProfileFormValues,
+                initialData,
+              );
+              return (
+                <Button type="submit" disabled={!isDirty || isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              );
+            }}
+          </form.Subscribe>
         </div>
       </form>
     </div>
