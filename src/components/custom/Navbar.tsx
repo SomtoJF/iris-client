@@ -8,7 +8,7 @@ export default function Navbar() {
     <nav className="w-full border-b border-gray-200 flex items-center justify-end py-3.5 gap-4">
       <Link
         to="/settings/account"
-        className="text-sm flex no-wrap items-center hover:text-purple-900"
+        className="text-sm flex no-wrap items-center text-muted-foreground hover:text-black"
       >
         <SettingsIcon className="w-4 h-4 mr-1" /> Settings
       </Link>
