@@ -17,7 +17,7 @@ export interface JobApplication {
   url: string;
   jobTitle: string;
   companyName: string;
-  status: "processing" | "applied" | "failed";
+  status: "processing" | "applied" | "failed" | "blocked";
   createdAt: string;
   updatedAt: string;
 }

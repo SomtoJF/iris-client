@@ -2,10 +2,17 @@ import {
   fetchAllJobApplications,
   retryJobApplication,
   type JobApplication,
+  type FetchAllJobApplicationsResponse,
 } from "@/services/job";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Loader2, RotateCcw, Search } from "lucide-react";
+import {
+  ExternalLink,
+  Loader2,
+  RotateCcw,
+  Search,
+  ShieldAlert,
+} from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -16,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRealtimeEvents } from "@/context/RealTimeEventContext";
 import { toast } from "@/hooks/toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/querykeyfactory";
 
 dayjs.extend(relativeTime);
 
@@ -56,6 +65,7 @@ function buildColumns(
   retryingIds: Set<string>,
   onToggle: (id: string) => void,
   onRetry: (id: string) => void,
+  onTakeAction: (id: string) => void,
 ): (ColumnDef<JobApplication, any> & {
   shimmer?: () => React.ReactNode;
   width?: string;
@@ -149,6 +159,17 @@ function buildColumns(
                 <span>{isRetrying ? "Retrying..." : "Retry"}</span>
               </button>
             )}
+
+            {row.original.status === "blocked" && (
+              <button
+                className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
+                disabled={isRetrying}
+                onClick={() => onTakeAction(row.original.id)}
+              >
+                <ShieldAlert className="w-3 h-3 mr-1" />
+                <span>Take Action</span>
+              </button>
+            )}
           </div>
         );
       },
@@ -173,13 +194,25 @@ export default function OngoingApplicationsTab() {
   const [pageIndex, setPageIndex] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
-  const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isFetching, setIsFetching] = useState(false);
   const { addEventListener } = useRealtimeEvents();
+  const queryClient = useQueryClient();
+
+  const queryKey = queryKeys.jobApplication.list({
+    page: pageIndex + 1,
+    limit: LIMIT,
+    search: activeSearch || undefined,
+  });
+
+  const { data, isFetching } = useQuery({
+    queryKey,
+    queryFn: () =>
+      fetchAllJobApplications(pageIndex + 1, LIMIT, activeSearch || undefined),
+  });
+
+  const jobApplications = data?.data ?? [];
+  const total = data?.total ?? 0;
 
   useEffect(() => {
     const applicationSuccessHandler = addEventListener(
@@ -188,10 +221,17 @@ export default function OngoingApplicationsTab() {
         toast.success(
           `Successfully applied to ${data.jobTitle} at ${data.companyName}`,
         );
-        setJobApplications((prev) =>
-          prev.map((j) =>
-            j.id === data.id ? { ...j, status: "applied" as const } : j,
-          ),
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id ? { ...j, status: "applied" as const } : j,
+              ),
+            };
+          },
         );
       },
     );
@@ -202,10 +242,17 @@ export default function OngoingApplicationsTab() {
         toast.error(
           `An application just failed for ${data.jobTitle} at ${data.companyName}`,
         );
-        setJobApplications((prev) =>
-          prev.map((j) =>
-            j.id === data.id ? { ...j, status: "failed" as const } : j,
-          ),
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id ? { ...j, status: "failed" as const } : j,
+              ),
+            };
+          },
         );
       },
     );
@@ -214,35 +261,10 @@ export default function OngoingApplicationsTab() {
       applicationSuccessHandler();
       applicationFailedHandler();
     };
-  }, [addEventListener]);
-
-  const loadApplications = useCallback(async () => {
-    setIsFetching(true);
-    try {
-      const res = await fetchAllJobApplications(
-        pageIndex + 1,
-        LIMIT,
-        activeSearch || undefined,
-      );
-      setJobApplications(res.data);
-      setTotal(res.total);
-    } finally {
-      setIsFetching(false);
-      setIsSearching(false);
-    }
-  }, [pageIndex, activeSearch]);
-
-  useEffect(() => {
-    loadApplications();
-  }, [loadApplications]);
+  }, [addEventListener, queryClient]);
 
   async function handleRetry(id: string) {
     setRetryingIds((prev) => new Set(prev).add(id));
-    setJobApplications((prev) =>
-      prev.map((j) =>
-        j.id === id ? { ...j, status: "processing" as const } : j,
-      ),
-    );
     setSelectedIds((prev) => {
       const s = new Set(prev);
       s.delete(id);
@@ -250,12 +272,13 @@ export default function OngoingApplicationsTab() {
     });
     try {
       await retryJobApplication(id);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
     } catch {
-      setJobApplications((prev) =>
-        prev.map((j) =>
-          j.id === id ? { ...j, status: "failed" as const } : j,
-        ),
-      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
     } finally {
       setRetryingIds((prev) => {
         const s = new Set(prev);
@@ -263,6 +286,10 @@ export default function OngoingApplicationsTab() {
         return s;
       });
     }
+  }
+
+  async function handleTakeAction(id: string) {
+    console.log("handleTakeAction", id);
   }
 
   function handleSearch() {
@@ -290,6 +317,7 @@ export default function OngoingApplicationsTab() {
     retryingIds,
     toggleSelect,
     handleRetry,
+    handleTakeAction,
   );
 
   const tableConfig: TableConfig<JobApplication> = {
@@ -320,7 +348,6 @@ export default function OngoingApplicationsTab() {
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  setIsSearching(true);
                   handleSearch();
                 }
               }}
@@ -329,13 +356,10 @@ export default function OngoingApplicationsTab() {
             <Button
               size="sm"
               className="px-4 h-8"
-              disabled={isSearching}
-              onClick={() => {
-                setIsSearching(true);
-                handleSearch();
-              }}
+              disabled={isFetching}
+              onClick={handleSearch}
             >
-              {isSearching ? (
+              {isFetching ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="ml-1">Searching...</span>
