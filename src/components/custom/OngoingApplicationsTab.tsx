@@ -52,6 +52,11 @@ function getStatusTagConfig(status: JobStatus): {
         textStyles: "text-red-500",
         iconStyles: "bg-red-500 opacity-50",
       };
+    case "blocked":
+      return {
+        textStyles: "text-pink-500",
+        iconStyles: "bg-pink-500 opacity-50",
+      };
     default:
       return {
         textStyles: "text-muted-foreground",
