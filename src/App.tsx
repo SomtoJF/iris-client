@@ -14,6 +14,7 @@ import ApplicationOnboardingPage from "./pages/onboarding/application/page";
 import SettingsLayout from "./layout/SettingsLayout";
 import ApplicationProfile from "./pages/settings/application-profile/ApplicationProfile";
 import Account from "./pages/settings/account/Account";
+import AdminPage from "./pages/settings/admin/page";
 
 function App() {
   const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function App() {
                 element={<ApplicationProfile />}
               />
               <Route path="account" element={<Account />} />
+              <Route path="admin" element={<AdminPage />} />
             </Route>
           </Routes>
         </RealtimeEventProvider>

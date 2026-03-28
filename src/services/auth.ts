@@ -47,6 +47,7 @@ export async function signup(data: z.infer<typeof signupSchema>) {
 
 export interface User {
   id: string;
+  isAdmin: boolean;
   firstName: string;
   lastName: string;
   email: string;

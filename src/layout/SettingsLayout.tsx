@@ -31,6 +31,18 @@ export default function SettingsLayout() {
     }
   }, [user, isFetching, setUser, clearUser]);
 
+  useEffect(() => {
+    if (
+      user?.isAdmin &&
+      !settingsSidebarItems.some((item) => item.path === "/settings/admin")
+    ) {
+      settingsSidebarItems.push({
+        path: "/settings/admin",
+        label: "Admin",
+      });
+    }
+  }, [user]);
+
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
