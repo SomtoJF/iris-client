@@ -25,6 +25,7 @@ import { useRealtimeEvents } from "@/context/RealTimeEventContext";
 import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
+import UserActionDialog from "./UserActionDialog";
 
 dayjs.extend(relativeTime);
 
@@ -201,6 +202,7 @@ export default function OngoingApplicationsTab() {
   const [activeSearch, setActiveSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(null);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
@@ -262,9 +264,34 @@ export default function OngoingApplicationsTab() {
       },
     );
 
+    const userActionRequiredHandler = addEventListener(
+      "USER_ACTION_REQUIRED",
+      (data) => {
+        toast.info(
+          `Action required for ${data.job_title} at ${data.company_name}`,
+        );
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.application_id
+                  ? { ...j, status: "blocked" as const }
+                  : j,
+              ),
+            };
+          },
+        );
+        setActionDialogJobId(data.application_id);
+      },
+    );
+
     return () => {
       applicationSuccessHandler();
       applicationFailedHandler();
+      userActionRequiredHandler();
     };
   }, [addEventListener, queryClient]);
 
@@ -293,8 +320,8 @@ export default function OngoingApplicationsTab() {
     }
   }
 
-  async function handleTakeAction(id: string) {
-    console.log("handleTakeAction", id);
+  function handleTakeAction(id: string) {
+    setActionDialogJobId(id);
   }
 
   function handleSearch() {
@@ -379,6 +406,13 @@ export default function OngoingApplicationsTab() {
         )}
       </div>
       <GenerativeGrid config={tableConfig} />
+      <UserActionDialog
+        open={!!actionDialogJobId}
+        onOpenChange={(o) => {
+          if (!o) setActionDialogJobId(null);
+        }}
+        jobApplicationId={actionDialogJobId}
+      />
     </div>
   );
 }

@@ -63,3 +63,53 @@ export async function retryJobApplication(id: string): Promise<void> {
     throw new Error(res.error ?? "Failed to retry job application");
   }
 }
+
+export interface UserActionLayoutItem {
+  field_name: string;
+  type: string | null;
+  component: string | null;
+  options: string[] | null;
+}
+
+export interface UserActionResponse {
+  id: number;
+  user_action_type: string;
+  action_details: string;
+  layout: UserActionLayoutItem[];
+  workflow_id: string;
+  signal_name: string;
+}
+
+export interface UserActionResultItem {
+  field_name: string;
+  value: string;
+}
+
+export async function fetchUserAction(jobApplicationId: string): Promise<UserActionResponse> {
+  const response = await fetch(`${BaseRoute}/jobs/${jobApplicationId}/user-action`, {
+    method: "GET",
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status !== 200) {
+    throw new Error(res.error ?? "Failed to fetch user action");
+  }
+  return res;
+}
+
+export async function sendWorkflowSignal(workflowId: string, signalName: string, payload: unknown): Promise<void> {
+  const response = await fetch(`${BaseRoute}/workflows/signal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      workflow_id: workflowId,
+      signal_name: signalName,
+      payload,
+    }),
+  });
+  const res = await response.json();
+  if (response.status > 299) {
+    throw new Error(res.error ?? "Failed to send workflow signal");
+  }
+}
