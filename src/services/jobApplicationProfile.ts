@@ -15,6 +15,10 @@ export const jobApplicationProfileSchema = z.object({
   countriesOfCitizenship: z.array(z.string()).min(1, "Select at least one country of citizenship"),
   gender: z.string().min(1, "Gender is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
+  salaryMin: z.number().nullable().optional(),
+  salaryMax: z.number().nullable().optional(),
+  salaryCurrency: z.string().optional(),
+  ethnicity: z.string().optional(),
 });
 
 export type JobApplicationProfileFormValues = z.infer<typeof jobApplicationProfileSchema>;
@@ -34,6 +38,10 @@ export interface JobApplicationProfileResponse {
   countriesOfCitizenship: string[];
   gender: string;
   dateOfBirth: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency?: string;
+  ethnicity?: string;
 }
 
 export type UpdateJobApplicationProfileRequest = Omit<

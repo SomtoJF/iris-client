@@ -45,6 +45,39 @@ const GENDER_OPTIONS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
+const ETHNICITY_OPTIONS = [
+  { value: "hispanic", label: "Hispanic" },
+  { value: "latino", label: "Latino" },
+  { value: "white", label: "White" },
+  { value: "black", label: "Black" },
+  { value: "asian", label: "Asian" },
+  {
+    value: "native_hawaiian_pacific_islander",
+    label: "Native Hawaiian or Other Pacific Islander",
+  },
+  {
+    value: "american_indian_alaska_native",
+    label: "American Indian or Alaska Native",
+  },
+  { value: "two_or_more_races", label: "Two or More Races" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+const CURRENCY_OPTIONS = [
+  { value: "USD", label: "USD" },
+  { value: "EUR", label: "EUR" },
+  { value: "GBP", label: "GBP" },
+  { value: "CAD", label: "CAD" },
+  { value: "AUD", label: "AUD" },
+  { value: "NGN", label: "NGN" },
+  { value: "GHS", label: "GHS" },
+  { value: "KES", label: "KES" },
+  { value: "ZAR", label: "ZAR" },
+  { value: "INR", label: "INR" },
+  { value: "JPY", label: "JPY" },
+  { value: "CNY", label: "CNY" },
+];
+
 const defaultFormValues: JobApplicationProfileFormValues = {
   firstName: "",
   lastName: "",
@@ -59,6 +92,10 @@ const defaultFormValues: JobApplicationProfileFormValues = {
   countriesOfCitizenship: [],
   gender: "",
   dateOfBirth: "",
+  salaryMin: null,
+  salaryMax: null,
+  salaryCurrency: "USD",
+  ethnicity: "",
 };
 
 const countryList = countries.all.filter(
@@ -89,6 +126,10 @@ function isFormDirty(
     "isVeteran",
     "gender",
     "dateOfBirth",
+    "salaryMin",
+    "salaryMax",
+    "salaryCurrency",
+    "ethnicity",
   ];
   return keys.some(
     (k) => String(current[k] ?? "") !== String(initial[k] ?? ""),
@@ -118,6 +159,10 @@ export default function ApplicationProfile() {
           ...rest,
           dateOfBirth: profile.dateOfBirth?.slice(0, 10) ?? "",
           countriesOfCitizenship: profile.countriesOfCitizenship ?? [],
+          salaryMin: profile.salaryMin ?? null,
+          salaryMax: profile.salaryMax ?? null,
+          salaryCurrency: profile.salaryCurrency ?? "USD",
+          ethnicity: profile.ethnicity ?? "",
         });
       } catch {
         if (!cancelled) {
@@ -539,6 +584,112 @@ function ProfileForm({
                         </label>
                       </div>
                     </RadioGroup>
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <Field>
+                <FieldTitle>Expected annual salary</FieldTitle>
+                <div className="flex gap-4 items-center">
+                  <form.Field name="salaryCurrency">
+                    {(field) => (
+                      <Field className="w-20">
+                        <FieldTitle>Currency</FieldTitle>
+                        <Select
+                          value={field.state.value ?? "USD"}
+                          onValueChange={(v) => field.handleChange(v)}
+                        >
+                          <SelectTrigger className="w-36">
+                            <SelectValue placeholder="Currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[...CURRENCY_OPTIONS]
+                              .sort((a, b) => a.label.localeCompare(b.label))
+                              .map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    )}
+                  </form.Field>
+                  <div className="grid grid-cols-2 gap-4">
+                    <form.Field name="salaryMin">
+                      {(field) => (
+                        <Field data-invalid={!!field.state.meta.errors?.length}>
+                          <FieldTitle>Min</FieldTitle>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={field.state.value ?? ""}
+                            onChange={(e) =>
+                              field.handleChange(
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
+                              )
+                            }
+                            onBlur={field.handleBlur}
+                            placeholder="e.g. 50000"
+                          />
+                          <FieldError
+                            errors={toFieldErrors(field.state.meta.errors)}
+                          />
+                        </Field>
+                      )}
+                    </form.Field>
+                    <form.Field name="salaryMax">
+                      {(field) => (
+                        <Field data-invalid={!!field.state.meta.errors?.length}>
+                          <FieldTitle>Max</FieldTitle>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={field.state.value ?? ""}
+                            onChange={(e) =>
+                              field.handleChange(
+                                e.target.value === ""
+                                  ? null
+                                  : Number(e.target.value),
+                              )
+                            }
+                            onBlur={field.handleBlur}
+                            placeholder="e.g. 80000"
+                          />
+                          <FieldError
+                            errors={toFieldErrors(field.state.meta.errors)}
+                          />
+                        </Field>
+                      )}
+                    </form.Field>
+                  </div>
+                </div>
+              </Field>
+
+              <form.Field name="ethnicity">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>Ethnicity</FieldTitle>
+                    <Select
+                      value={field.state.value ?? ""}
+                      onValueChange={(v) => field.handleChange(v)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select ethnicity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ETHNICITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FieldError
                       errors={toFieldErrors(field.state.meta.errors)}
                     />
