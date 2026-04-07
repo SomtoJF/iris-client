@@ -121,7 +121,11 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                     return (
                       <TableCell
                         key={cell.id}
-                        style={width ? { width, maxWidth: width } : undefined}
+                        style={
+                          width
+                            ? { width, maxWidth: width, overflow: "hidden" }
+                            : undefined
+                        }
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

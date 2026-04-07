@@ -98,15 +98,16 @@ function buildColumns(
       accessorKey: "jobTitle",
       header: "Job Title",
       cell: ({ row }) => (
-        <span
+        <div
           className={cn(
             "truncate text-black",
             row.original.jobTitle.toLowerCase().startsWith("pending") &&
               "bg-yellow-200",
           )}
+          title={row.original.jobTitle}
         >
           {row.original.jobTitle}
-        </span>
+        </div>
       ),
       shimmer: () => <Skeleton className="h-4 w-64" />,
       width: "300px",
@@ -115,7 +116,9 @@ function buildColumns(
       accessorKey: "companyName",
       header: "Company Name",
       cell: ({ row }) => (
-        <span className="truncate text-black">{row.original.companyName}</span>
+        <div className="truncate text-black" title={row.original.companyName}>
+          {row.original.companyName}
+        </div>
       ),
       shimmer: () => <Skeleton className="h-4 w-64" />,
       width: "200px",
@@ -202,7 +205,9 @@ export default function OngoingApplicationsTab() {
   const [activeSearch, setActiveSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
-  const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(null);
+  const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(
+    null,
+  );
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
