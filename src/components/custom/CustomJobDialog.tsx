@@ -28,7 +28,7 @@ export default function CustomJobDialog({
 }: CustomJobDialogProps) {
   const [jobUrl, setJobUrl] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(_e: React.FormEvent) {
     onSubmit({ jobUrl });
     setJobUrl("");
     onOpenChange(false);

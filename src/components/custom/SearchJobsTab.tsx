@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function SearchJobsTab() {
   return (
     <div className="w-full justify-center items-center p-8">
