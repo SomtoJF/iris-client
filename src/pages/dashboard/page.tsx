@@ -13,6 +13,7 @@ import OngoingApplicationsTab from "@/components/custom/OngoingApplicationsTab";
 import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
+import { usePageTitle } from "@/hooks/page-title";
 
 const TAB_VALUES = ["search-jobs", "ongoing-applications"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
@@ -25,6 +26,7 @@ function tabFromSearchParams(searchParams: URLSearchParams): TabValue {
 }
 
 export default function Dashboard() {
+  usePageTitle("Dashboard");
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = tabFromSearchParams(searchParams);
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);

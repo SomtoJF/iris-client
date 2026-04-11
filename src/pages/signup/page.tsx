@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router";
 import { signup, signupSchema } from "@/services/auth";
+import { usePageTitle } from "@/hooks/page-title";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import type z from "zod";
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function Signup() {
+  usePageTitle("Create Account");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 

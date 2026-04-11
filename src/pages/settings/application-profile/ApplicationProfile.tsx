@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/page-title";
 import { Loader2, X } from "lucide-react";
 import { CircleFlag } from "react-circle-flags";
 import { countries } from "country-data-list";
@@ -144,6 +145,7 @@ function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
 }
 
 export default function ApplicationProfile() {
+  usePageTitle("Application Profile");
   const [initialData, setInitialData] =
     useState<JobApplicationProfileFormValues | null>(null);
   const [isLoading, setIsLoading] = useState(true);

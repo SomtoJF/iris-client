@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type z from "zod";
+import { usePageTitle } from "@/hooks/page-title";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  usePageTitle("Sign In");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 

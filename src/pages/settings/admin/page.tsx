@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router";
+import { usePageTitle } from "@/hooks/page-title";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -142,6 +143,7 @@ function buildColumns(
 }
 
 export default function AdminPage() {
+  usePageTitle("Admin");
   const [searchParams, setSearchParams] = useSearchParams();
   const [pageIndex, setPageIndex] = useState(0);
   const [searchInput, setSearchInput] = useState("");

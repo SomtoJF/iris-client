@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "react-router";
+import { usePageTitle } from "@/hooks/page-title";
 import {
   Card,
   CardContent,
@@ -129,6 +130,7 @@ const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
 };
 
 export default function ApplicationOnboardingPage() {
+  usePageTitle("Application Profile");
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);

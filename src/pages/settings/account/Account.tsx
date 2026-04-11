@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
+import { usePageTitle } from "@/hooks/page-title";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
@@ -20,6 +21,7 @@ import type { z } from "zod";
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export default function Account() {
+  usePageTitle("Account");
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/page-title";
 import { Upload, Trash2, Download, Loader2 } from "lucide-react";
 import {
   fetchResumes,
@@ -26,6 +27,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export default function ResumeOnboardingPage() {
+  usePageTitle("Upload Resume");
   const navigate = useNavigate();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
