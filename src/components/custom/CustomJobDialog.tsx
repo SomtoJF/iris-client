@@ -9,10 +9,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface CustomJobDialogProps {
   open: boolean;
@@ -57,8 +57,18 @@ export default function CustomJobDialog({
                 onChange={(e) => setJobUrl(e.target.value)}
                 required
               />
+              <FieldDescription className="flex items-center gap-1.5 text-xs text-yellow-700">
+                <AlertTriangle
+                  className="mt-0.5 size-3.5 shrink-0"
+                  aria-hidden
+                />
+                <span>
+                  Make sure the job URL leads to the job description page.
+                </span>
+              </FieldDescription>
             </Field>
           </FieldGroup>
+
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline">
