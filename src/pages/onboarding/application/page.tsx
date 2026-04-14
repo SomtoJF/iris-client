@@ -131,9 +131,65 @@ const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
 
 export default function ApplicationOnboardingPage() {
   usePageTitle("Application Profile");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [initialData, setInitialData] =
+    useState<JobApplicationProfileFormValues | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const profile = await getJobApplicationProfile();
+        if (cancelled) return;
+        const { id: _id, ...rest } = profile;
+        setInitialData({
+          ...rest,
+          dateOfBirth: profile.dateOfBirth?.slice(0, 10) ?? "",
+          countriesOfCitizenship: profile.countriesOfCitizenship ?? [],
+          salaryMin: profile.salaryMin ?? null,
+          salaryMax: profile.salaryMax ?? null,
+          salaryCurrency: profile.salaryCurrency ?? "USD",
+          ethnicity: profile.ethnicity ?? "",
+        });
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Failed to load profile. You may need to sign in.",
+          );
+          setInitialData(defaultFormValues);
+        }
+      } finally {
+        if (!cancelled) setIsLoadingProfile(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (isLoadingProfile || !initialData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading profile...
+        </div>
+      </div>
+    );
+  }
+
+  return <ApplicationOnboardingForm initialData={initialData} />;
+}
+
+function ApplicationOnboardingForm({
+  initialData,
+}: {
+  initialData: JobApplicationProfileFormValues;
+}) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepErrors, setStepErrors] = useState<
     Partial<Record<keyof JobApplicationProfileFormValues, string>>
@@ -143,7 +199,7 @@ export default function ApplicationOnboardingPage() {
   >(null);
 
   const form = useForm({
-    defaultValues: defaultFormValues,
+    defaultValues: initialData,
     onSubmit: async ({ value }) => {
       const parsed = jobApplicationProfileSchema.safeParse(value);
       if (!parsed.success) {
@@ -168,35 +224,6 @@ export default function ApplicationOnboardingPage() {
       }
     },
   });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const profile = await getJobApplicationProfile();
-        if (cancelled) return;
-        const { id: _id, ...rest } = profile;
-        form.reset({
-          ...rest,
-          dateOfBirth: profile.dateOfBirth?.slice(0, 10) ?? "",
-          countriesOfCitizenship: profile.countriesOfCitizenship ?? [],
-          salaryMin: profile.salaryMin ?? null,
-          salaryMax: profile.salaryMax ?? null,
-          salaryCurrency: profile.salaryCurrency ?? "USD",
-          ethnicity: profile.ethnicity ?? "",
-        });
-      } catch {
-        if (!cancelled) {
-          toast.error("Failed to load profile. You may need to sign in.");
-        }
-      } finally {
-        if (!cancelled) setIsLoadingProfile(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!firstErrorFieldToFocus) return;
@@ -265,17 +292,6 @@ export default function ApplicationOnboardingPage() {
     setStepErrors({});
     setCurrentStep((s) => Math.max(s - 1, 1));
   };
-
-  if (isLoadingProfile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading profile...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4 sm:px-6 lg:px-8">
@@ -831,26 +847,34 @@ export default function ApplicationOnboardingPage() {
 
                   <Field data-field="salary">
                     <FieldTitle>Expected annual salary</FieldTitle>
-                    <div className="space-y-2">
+                    <div className="flex gap-4 items-center">
                       <form.Field name="salaryCurrency">
                         {(field) => (
-                          <Select
-                            value={field.state.value ?? "USD"}
-                            onValueChange={(v) => field.handleChange(v)}
-                          >
-                            <SelectTrigger className="w-36">
-                              <SelectValue placeholder="Currency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[...CURRENCY_OPTIONS]
-                                .sort((a, b) => a.label.localeCompare(b.label))
-                                .map((opt) => (
-                                  <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          <Field className="w-20">
+                            <FieldTitle>Currency</FieldTitle>
+                            <Select
+                              value={field.state.value ?? "USD"}
+                              onValueChange={(v) => field.handleChange(v)}
+                            >
+                              <SelectTrigger className="w-36">
+                                <SelectValue placeholder="Currency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[...CURRENCY_OPTIONS]
+                                  .sort((a, b) =>
+                                    a.label.localeCompare(b.label),
+                                  )
+                                  .map((opt) => (
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value}
+                                    >
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </Field>
                         )}
                       </form.Field>
                       <div className="grid grid-cols-2 gap-4">
