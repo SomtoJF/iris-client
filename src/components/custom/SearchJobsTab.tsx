@@ -83,15 +83,19 @@ function JobResultRow({
   onApply: (url: string) => void;
 }) {
   const pending = applyingUrl === job.url;
+  const openJobInNewTab = () => {
+    window.open(job.url, "_blank", "noopener,noreferrer");
+  };
   return (
     <div
+      onClick={openJobInNewTab}
       className={cn(
-        "flex flex-row items-start gap-3 border-b border-border py-4 last:border-b-0",
+        "group flex cursor-pointer flex-row items-start gap-3 border-b border-border py-4 last:border-b-0 hover:bg-muted/50",
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="truncate font-semibold text-foreground">
+          <span className="truncate font-semibold text-foreground transition-colors group-hover:text-purple-600">
             {job.title}
           </span>
           {job.datePosted ? (
@@ -109,7 +113,10 @@ function JobResultRow({
           type="button"
           size="sm"
           disabled={pending}
-          onClick={() => onApply(job.url)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onApply(job.url);
+          }}
         >
           {pending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
