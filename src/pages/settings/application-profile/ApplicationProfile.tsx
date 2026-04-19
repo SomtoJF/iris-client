@@ -837,7 +837,7 @@ function ProfileForm({
                             key={idx}
                             className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end"
                           >
-                            <div className="sm:col-span-2">
+                            <div className="sm:col-span-2 space-y-2">
                               <FieldTitle>Language</FieldTitle>
                               <Input
                                 value={lp.language}
@@ -852,7 +852,7 @@ function ProfileForm({
                                 placeholder="e.g. English"
                               />
                             </div>
-                            <div>
+                            <div className="space-y-2">
                               <FieldTitle>Proficiency</FieldTitle>
                               <ProficiencyPopover
                                 value={lp.proficiency}
@@ -970,7 +970,7 @@ function ProficiencyPopover({
           type="button"
           variant="outline"
           className={cn(
-            "w-full justify-between px-3 py-2 h-10 overflow-hidden",
+            "w-full justify-between px-3 py-2 h-8 overflow-hidden",
             !selected && "text-muted-foreground",
           )}
         >
