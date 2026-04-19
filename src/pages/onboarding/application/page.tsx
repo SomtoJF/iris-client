@@ -49,6 +49,7 @@ import {
   getJobApplicationProfile,
   upsertJobApplicationProfile,
   jobApplicationProfileSchema,
+  CURRENCY_CODES,
   LANGUAGE_PROFICIENCY_OPTIONS,
   WORKING_ARRANGEMENT_OPTIONS,
   type JobApplicationProfileFormValues,
@@ -80,21 +81,6 @@ const ETHNICITY_OPTIONS = [
   },
   { value: "two_or_more_races", label: "Two or More Races" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
-];
-
-const CURRENCY_OPTIONS = [
-  { value: "USD", label: "USD" },
-  { value: "EUR", label: "EUR" },
-  { value: "GBP", label: "GBP" },
-  { value: "CAD", label: "CAD" },
-  { value: "AUD", label: "AUD" },
-  { value: "NGN", label: "NGN" },
-  { value: "GHS", label: "GHS" },
-  { value: "KES", label: "KES" },
-  { value: "ZAR", label: "ZAR" },
-  { value: "INR", label: "INR" },
-  { value: "JPY", label: "JPY" },
-  { value: "CNY", label: "CNY" },
 ];
 
 const defaultFormValues: JobApplicationProfileFormValues = {
@@ -806,28 +792,10 @@ function ApplicationOnboardingForm({
                         {(field) => (
                           <Field className="w-20">
                             <FieldTitle>Currency</FieldTitle>
-                            <Select
+                            <CurrencyPopover
                               value={field.state.value ?? "USD"}
-                              onValueChange={(v) => field.handleChange(v)}
-                            >
-                              <SelectTrigger className="w-36">
-                                <SelectValue placeholder="Currency" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[...CURRENCY_OPTIONS]
-                                  .sort((a, b) =>
-                                    a.label.localeCompare(b.label),
-                                  )
-                                  .map((opt) => (
-                                    <SelectItem
-                                      key={opt.value}
-                                      value={opt.value}
-                                    >
-                                      {opt.label}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
+                              onChange={(v) => field.handleChange(v)}
+                            />
                           </Field>
                         )}
                       </form.Field>
@@ -1321,20 +1289,20 @@ function ApplicationOnboardingForm({
                   type="button"
                   variant="outline"
                   onClick={handleBack}
-                  className="px-2 py-1"
+                  className="px-4 py-2"
                   disabled={currentStep === 1}
                 >
                   Back
                 </Button>
                 {currentStep < TOTAL_STEPS ? (
-                  <Button type="submit" className="px-2 py-1">
+                  <Button type="submit" className="px-4 py-2">
                     Next
                   </Button>
                 ) : (
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-2 py-1"
+                    className="px-4 py-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -1414,6 +1382,66 @@ function ProficiencyPopover({
                     className={cn(
                       "ml-auto h-4 w-4 shrink-0 mt-1",
                       o.value === value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CurrencyPopover({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-36 justify-between px-3 py-2 h-8 overflow-hidden"
+        >
+          <span className="flex-1 min-w-0 truncate text-left">{value}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        collisionPadding={10}
+        side="bottom"
+        className="min-w-[--radix-popper-anchor-width] p-0"
+      >
+        <Command className="w-full max-h-[260px]">
+          <CommandList>
+            <div className="sticky top-0 z-10 bg-popover">
+              <CommandInput placeholder="Search currency..." />
+            </div>
+            <CommandEmpty>No matches.</CommandEmpty>
+            <CommandGroup>
+              {CURRENCY_CODES.map((code) => (
+                <CommandItem
+                  key={code}
+                  value={code}
+                  className="flex items-center gap-2"
+                  onSelect={() => {
+                    onChange(code);
+                    setOpen(false);
+                  }}
+                >
+                  <span className="truncate">{code}</span>
+                  <CheckIcon
+                    className={cn(
+                      "ml-auto h-4 w-4 shrink-0",
+                      code === value ? "opacity-100" : "opacity-0",
                     )}
                   />
                 </CommandItem>

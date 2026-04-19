@@ -1,5 +1,6 @@
 import { BaseRoute } from "./routes";
 import z from "zod";
+import { countries } from "country-data-list";
 
 export const LANGUAGE_PROFICIENCY_OPTIONS = [
   {
@@ -38,6 +39,15 @@ export const WORKING_ARRANGEMENT_OPTIONS = [
   { value: "hybrid", label: "Hybrid work (some days remote, some days in-office)" },
   { value: "in_office", label: "Fully in-office" },
 ] as const;
+
+export const CURRENCY_CODES = Array.from(
+  new Set(
+    countries.all
+      .filter((c) => c.status !== "deleted" && c.ioc !== "PRK")
+      .flatMap((c) => c.currencies ?? [])
+      .filter(Boolean),
+  ),
+).sort((a, b) => a.localeCompare(b));
 
 export const jobApplicationProfileSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
