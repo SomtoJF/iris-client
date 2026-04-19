@@ -68,7 +68,7 @@ export const jobApplicationProfileSchema = z.object({
   salaryCurrency: z.string().optional(),
   ethnicity: z.string().optional(),
   isOpenToRelocating: z.boolean().nullable(),
-  noticePeriodDays: z.number().int().min(0).nullable(),
+  noticePeriodDays: z.number().int().min(0, "Notice period must be 0 or more").nullable(),
   preferredWorkingArrangement: z
     .array(z.enum(["remote", "hybrid", "in_office"]))
     .default([]),

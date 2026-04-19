@@ -219,13 +219,58 @@ function ApplicationOnboardingForm({
   const form = useForm({
     defaultValues: initialData,
     onSubmit: async ({ value }) => {
+      // Extra required onboarding fields (surface via FieldError + focus)
+      const requiredErrors: Partial<
+        Record<keyof JobApplicationProfileFormValues, string>
+      > = {};
+      if (value.isOpenToRelocating === null) {
+        requiredErrors.isOpenToRelocating = "Please select yes or no";
+      }
+      if (value.noticePeriodDays === null) {
+        requiredErrors.noticePeriodDays = "Notice period is required";
+      }
+      if ((value.preferredWorkingArrangement ?? []).length === 0) {
+        requiredErrors.preferredWorkingArrangement = "Select at least one option";
+      }
+      if ((value.languageProficiencies ?? []).length === 0) {
+        requiredErrors.languageProficiencies = "Add at least one language";
+      }
+
+      if (Object.keys(requiredErrors).length > 0) {
+        setStepErrors(requiredErrors);
+        const firstErrorField = (Object.keys(requiredErrors)[0] ??
+          null) as keyof JobApplicationProfileFormValues | null;
+        if (firstErrorField) setFirstErrorFieldToFocus(firstErrorField);
+        toast.error("Please complete the required fields.");
+        return;
+      }
+
       const parsed = jobApplicationProfileSchema.safeParse(value);
       if (!parsed.success) {
-        const first = parsed.error.flatten().fieldErrors;
-        const msg = Object.values(first).flat().find(Boolean) as
+        const err = parsed.error.flatten().fieldErrors as Partial<
+          Record<keyof JobApplicationProfileFormValues, string[]>
+        >;
+        const stepFieldNames = STEP_FIELDS[currentStep] ?? [];
+        const errors: Partial<
+          Record<keyof JobApplicationProfileFormValues, string>
+        > = {};
+        let firstErrorField: keyof JobApplicationProfileFormValues | undefined;
+
+        for (const name of stepFieldNames) {
+          const msg = err[name]?.[0];
+          if (msg) {
+            errors[name] = msg;
+            if (firstErrorField === undefined) firstErrorField = name;
+          }
+        }
+
+        setStepErrors(errors);
+        if (firstErrorField) setFirstErrorFieldToFocus(firstErrorField);
+
+        const firstMsg = Object.values(err).flat().find(Boolean) as
           | string
           | undefined;
-        toast.error(msg ?? "Please fix the form errors.");
+        toast.error(firstMsg ?? "Please fix the form errors.");
         return;
       }
       setIsSubmitting(true);
@@ -274,6 +319,47 @@ function ApplicationOnboardingForm({
     const r = stepSchema.safeParse(value);
 
     if (r.success) {
+      // Step 3 extra required checks
+      if (currentStep === 3) {
+        const errors: Partial<
+          Record<keyof JobApplicationProfileFormValues, string>
+        > = {};
+        let firstErrorField: keyof JobApplicationProfileFormValues | undefined;
+
+        if (
+          stepFieldNames.includes("isOpenToRelocating") &&
+          value.isOpenToRelocating === null
+        ) {
+          errors.isOpenToRelocating = "Please select yes or no";
+          firstErrorField ??= "isOpenToRelocating";
+        }
+        if (
+          stepFieldNames.includes("noticePeriodDays") &&
+          value.noticePeriodDays === null
+        ) {
+          errors.noticePeriodDays = "Notice period is required";
+          firstErrorField ??= "noticePeriodDays";
+        }
+        if (
+          stepFieldNames.includes("preferredWorkingArrangement") &&
+          (value.preferredWorkingArrangement ?? []).length === 0
+        ) {
+          errors.preferredWorkingArrangement = "Select at least one option";
+          firstErrorField ??= "preferredWorkingArrangement";
+        }
+        if (
+          stepFieldNames.includes("languageProficiencies") &&
+          (value.languageProficiencies ?? []).length === 0
+        ) {
+          errors.languageProficiencies = "Add at least one language";
+          firstErrorField ??= "languageProficiencies";
+        }
+
+        if (Object.keys(errors).length > 0) {
+          return { valid: false, firstErrorField, errors };
+        }
+      }
+
       return { valid: true };
     }
 
