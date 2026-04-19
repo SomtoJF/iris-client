@@ -304,7 +304,7 @@ export default function SearchJobsTab() {
                 Location
               </label>
               <CountryDropdown
-                defaultValue="NGA"
+                defaultValue={selectedCountry?.alpha3 ?? "NGA"}
                 onChange={setSelectedCountry}
                 placeholder="Select location"
                 slim

@@ -26,6 +26,11 @@ import { CircleFlag } from "react-circle-flags";
 // data
 import { countries } from "country-data-list";
 
+const DEFAULT_COUNTRY_OPTIONS: Country[] = countries.all.filter(
+  (country: Country) =>
+    country.emoji && country.status !== "deleted" && country.ioc !== "PRK",
+);
+
 // Country interface
 export interface Country {
   alpha2: string;
@@ -51,10 +56,7 @@ interface CountryDropdownProps {
 
 const CountryDropdownComponent = (
   {
-    options = countries.all.filter(
-      (country: Country) =>
-        country.emoji && country.status !== "deleted" && country.ioc !== "PRK",
-    ),
+    options = DEFAULT_COUNTRY_OPTIONS,
     onChange,
     defaultValue,
     disabled = false,
@@ -69,6 +71,8 @@ const CountryDropdownComponent = (
     undefined,
   );
 
+  // Only sync when defaultValue changes. Including `options` in deps breaks
+  // callers that pass a freshly filtered array each render (selection snaps back).
   useEffect(() => {
     if (defaultValue) {
       const initialCountry = options.find(
@@ -77,18 +81,16 @@ const CountryDropdownComponent = (
       if (initialCountry) {
         setSelectedCountry(initialCountry);
       } else {
-        // Reset selected country if defaultValue is not found
         setSelectedCountry(undefined);
       }
     } else {
-      // Reset selected country if defaultValue is undefined or null
       setSelectedCountry(undefined);
     }
-  }, [defaultValue, options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see comment above
+  }, [defaultValue]);
 
   const handleSelect = useCallback(
     (country: Country) => {
-      console.log("🌍 CountryDropdown value: ", country);
       setSelectedCountry(country);
       onChange?.(country);
       setOpen(false);
