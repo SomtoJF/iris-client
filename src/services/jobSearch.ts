@@ -14,14 +14,14 @@ export interface JobSearchResponse {
 export interface JobSearchHistoryEntry {
   searchQuery: string;
   location: string;
-  dateCutoff: string;
+  dateCutoff: string | null;
   requestedAt: string;
 }
 
 export async function searchJobs(body: {
   searchQuery: string;
   location: string;
-  dateCutoff: string;
+  dateCutoff: string | null;
 }): Promise<JobSearchResponse> {
   const response = await fetch(`${BaseRoute}/jobs/search`, {
     method: "POST",

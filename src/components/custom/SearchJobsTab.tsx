@@ -34,23 +34,31 @@ import {
 import { cn } from "@/lib/utils";
 
 const DATE_RANGE_OPTIONS = [
+  { value: "any", label: "Any time" },
   { value: "1d", label: "Past 24 hours" },
   { value: "w", label: "Past week" },
   { value: "m", label: "Past month" },
   { value: "y", label: "Past year" },
 ] as const;
 
-function normalizeDateCutoff(code: string): string {
+function normalizeDateCutoff(code: string | null | undefined): string {
+  if (code == null) return "any";
   const n = code.trim().toLowerCase();
+  if (["any", "all", "anytime"].includes(n)) return "any";
   if (["1d", "d", "day"].includes(n)) return "1d";
   if (["w", "week", "7d"].includes(n)) return "w";
   if (["m", "month", "30d"].includes(n)) return "m";
   if (["y", "year"].includes(n)) return "y";
-  return DATE_RANGE_OPTIONS.some((o) => o.value === n) ? n : "1d";
+  return DATE_RANGE_OPTIONS.some((o) => o.value === n) ? n : "any";
 }
 
-function dateCutoffLabel(code: string): string {
+function dateCutoffLabel(code: string | null | undefined): string {
+  if (code == null) return "Any time";
   const map: Record<string, string> = {
+    "": "Any time",
+    any: "Any time",
+    all: "Any time",
+    anytime: "Any time",
     "1d": "Past 24 hours",
     d: "Past 24 hours",
     day: "Past 24 hours",
@@ -169,7 +177,8 @@ function HistoryEntryRow({
 export default function SearchJobsTab() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateCutoff, setDateCutoff] = useState<string>("1d");
+  // UI select value is always a string; "any" is our sentinel for "no cutoff".
+  const [dateCutoff, setDateCutoff] = useState<string>("any");
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [jobs, setJobs] = useState<DiscoveredJob[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -191,7 +200,11 @@ export default function SearchJobsTab() {
     queryFn: fetchJobSearchHistory,
   });
 
-  const searchMutation = useMutation({
+  const searchMutation = useMutation<
+    Awaited<ReturnType<typeof searchJobs>>,
+    unknown,
+    Parameters<typeof searchJobs>[0]
+  >({
     mutationFn: searchJobs,
     onSuccess: (data) => {
       setJobs(data.jobs);
@@ -220,7 +233,7 @@ export default function SearchJobsTab() {
     searchMutation.mutate({
       searchQuery: q,
       location: locationAlpha2,
-      dateCutoff,
+      dateCutoff: dateCutoff === "any" ? null : dateCutoff,
     });
   };
 
