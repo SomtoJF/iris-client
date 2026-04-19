@@ -2,11 +2,35 @@ import { BaseRoute } from "./routes";
 import z from "zod";
 
 export const LANGUAGE_PROFICIENCY_OPTIONS = [
-  { value: "native_bilingual", label: "Native / Bilingual" },
-  { value: "full_professional", label: "Full Professional Proficiency" },
-  { value: "professional_working", label: "Professional Working Proficiency" },
-  { value: "limited_working", label: "Limited Working Proficiency" },
-  { value: "elementary", label: "Elementary Proficiency" },
+  {
+    value: "native_bilingual",
+    label: "Native / Bilingual",
+    description: "Mother tongue or perfect native ability.",
+  },
+  {
+    value: "full_professional",
+    label: "Full Professional Proficiency",
+    description:
+      "Can communicate fluently and accurately in nearly all work situations.",
+  },
+  {
+    value: "professional_working",
+    label: "Professional Working Proficiency",
+    description:
+      "Can participate effectively in most conversations at work and handle tasks independently.",
+  },
+  {
+    value: "limited_working",
+    label: "Limited Working Proficiency",
+    description:
+      "Can handle routine or simple work tasks with basic conversations and instructions.",
+  },
+  {
+    value: "elementary",
+    label: "Elementary Proficiency",
+    description:
+      "Can communicate at a very basic level, such as greetings or simple travel needs.",
+  },
 ] as const;
 
 export const WORKING_ARRANGEMENT_OPTIONS = [

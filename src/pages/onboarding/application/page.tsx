@@ -25,11 +25,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Loader2, X } from "lucide-react";
+import { CheckIcon, ChevronDown, Loader2, X } from "lucide-react";
 import { CircleFlag } from "react-circle-flags";
 import { countries } from "country-data-list";
 import {
@@ -40,6 +53,7 @@ import {
   WORKING_ARRANGEMENT_OPTIONS,
   type JobApplicationProfileFormValues,
 } from "@/services/jobApplicationProfile";
+import { cn } from "@/lib/utils";
 
 const TOTAL_STEPS = 3;
 
@@ -725,79 +739,56 @@ function ApplicationOnboardingForm({
 
               {currentStep === 3 && (
                 <FieldGroup className="space-y-4">
-                  <form.Field name="countriesOfCitizenship">
+                  <form.Field name="preferredWorkingArrangement">
                     {(field) => {
-                      const list = field.state.value ?? [];
+                      const selected = field.state.value ?? [];
                       return (
                         <Field
-                          data-field="countriesOfCitizenship"
+                          data-field="preferredWorkingArrangement"
                           data-invalid={
                             !!(
-                              stepErrors.countriesOfCitizenship ??
+                              stepErrors.preferredWorkingArrangement ??
                               field.state.meta.errors?.length
                             )
                           }
                         >
-                          <FieldTitle>Countries of citizenship</FieldTitle>
+                          <FieldTitle>
+                            Preferred working arrangement (select all that
+                            apply)
+                          </FieldTitle>
                           <div className="space-y-2">
-                            {list.map((code: string, idx: number) => {
-                              const country = getCountryByAlpha3(code);
+                            {WORKING_ARRANGEMENT_OPTIONS.map((opt) => {
+                              const checked = selected.includes(opt.value);
                               return (
-                                <div
-                                  key={`${code}-${idx}`}
-                                  className="flex items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                                <label
+                                  key={opt.value}
+                                  className="flex items-start gap-2 text-sm"
                                 >
-                                  {country ? (
-                                    <>
-                                      <div className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                                        <CircleFlag
-                                          countryCode={country.alpha2.toLowerCase()}
-                                          height={20}
-                                        />
-                                      </div>
-                                      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                                        {country.name}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <span className="flex-1 text-muted-foreground">
-                                      {code}
-                                    </span>
-                                  )}
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    aria-label="Remove"
-                                    onClick={() => {
-                                      const next = list.filter(
-                                        (_: string, i: number) => i !== idx,
-                                      );
+                                  <input
+                                    type="checkbox"
+                                    className="mt-0.5"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const next = e.target.checked
+                                        ? [...selected, opt.value]
+                                        : selected.filter(
+                                            (v) => v !== opt.value,
+                                          );
                                       field.handleChange(next);
                                     }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                                  />
+                                  <span>{opt.label}</span>
+                                </label>
                               );
                             })}
-                            <CountryDropdown
-                              placeholder="Add country of citizenship"
-                              onChange={(country: Country) => {
-                                const code = country.alpha3;
-                                if (!list.includes(code)) {
-                                  field.handleChange([...list, code]);
-                                }
-                              }}
-                            />
                           </div>
                           <FieldError
                             errors={
-                              stepErrors.countriesOfCitizenship
+                              stepErrors.preferredWorkingArrangement
                                 ? [
                                     {
                                       message:
-                                        stepErrors.countriesOfCitizenship,
+                                        stepErrors.preferredWorkingArrangement,
                                     },
                                   ]
                                 : toFieldErrors(field.state.meta.errors)
@@ -806,61 +797,6 @@ function ApplicationOnboardingForm({
                         </Field>
                       );
                     }}
-                  </form.Field>
-                  <form.Field name="isVeteran">
-                    {(field) => (
-                      <Field
-                        data-field="isVeteran"
-                        data-invalid={
-                          !!(
-                            stepErrors.isVeteran ??
-                            field.state.meta.errors?.length
-                          )
-                        }
-                      >
-                        <FieldTitle>I am a veteran</FieldTitle>
-                        <RadioGroup
-                          value={String(field.state.value)}
-                          onValueChange={(v) =>
-                            field.handleChange(v === "true")
-                          }
-                          onBlur={field.handleBlur}
-                          aria-invalid={
-                            !!(
-                              stepErrors.isVeteran ??
-                              field.state.meta.errors?.length
-                            )
-                          }
-                          className="flex flex-row gap-4"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="true" id="isVeteran-yes" />
-                            <label
-                              htmlFor="isVeteran-yes"
-                              className="text-sm font-medium cursor-pointer"
-                            >
-                              Yes
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="false" id="isVeteran-no" />
-                            <label
-                              htmlFor="isVeteran-no"
-                              className="text-sm font-medium cursor-pointer"
-                            >
-                              No
-                            </label>
-                          </div>
-                        </RadioGroup>
-                        <FieldError
-                          errors={
-                            stepErrors.isVeteran
-                              ? [{ message: stepErrors.isVeteran }]
-                              : toFieldErrors(field.state.meta.errors)
-                          }
-                        />
-                      </Field>
-                    )}
                   </form.Field>
 
                   <Field data-field="salary">
@@ -953,44 +889,6 @@ function ApplicationOnboardingForm({
                       </div>
                     </div>
                   </Field>
-
-                  <form.Field name="ethnicity">
-                    {(field) => (
-                      <Field
-                        data-field="ethnicity"
-                        data-invalid={
-                          !!(
-                            stepErrors.ethnicity ??
-                            field.state.meta.errors?.length
-                          )
-                        }
-                      >
-                        <FieldTitle>Ethnicity</FieldTitle>
-                        <Select
-                          value={field.state.value ?? ""}
-                          onValueChange={(v) => field.handleChange(v)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select ethnicity" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ETHNICITY_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldError
-                          errors={
-                            stepErrors.ethnicity
-                              ? [{ message: stepErrors.ethnicity }]
-                              : toFieldErrors(field.state.meta.errors)
-                          }
-                        />
-                      </Field>
-                    )}
-                  </form.Field>
 
                   <form.Field name="isOpenToRelocating">
                     {(field) => (
@@ -1103,53 +1001,79 @@ function ApplicationOnboardingForm({
                     )}
                   </form.Field>
 
-                  <form.Field name="preferredWorkingArrangement">
+                  <form.Field name="countriesOfCitizenship">
                     {(field) => {
-                      const selected = field.state.value ?? [];
+                      const list = field.state.value ?? [];
                       return (
                         <Field
-                          data-field="preferredWorkingArrangement"
+                          data-field="countriesOfCitizenship"
                           data-invalid={
                             !!(
-                              stepErrors.preferredWorkingArrangement ??
+                              stepErrors.countriesOfCitizenship ??
                               field.state.meta.errors?.length
                             )
                           }
                         >
-                          <FieldTitle>Preferred working arrangement</FieldTitle>
+                          <FieldTitle>Countries of citizenship</FieldTitle>
                           <div className="space-y-2">
-                            {WORKING_ARRANGEMENT_OPTIONS.map((opt) => {
-                              const checked = selected.includes(opt.value);
+                            {list.map((code: string, idx: number) => {
+                              const country = getCountryByAlpha3(code);
                               return (
-                                <label
-                                  key={opt.value}
-                                  className="flex items-start gap-2 text-sm"
+                                <div
+                                  key={`${code}-${idx}`}
+                                  className="flex items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    className="mt-0.5"
-                                    checked={checked}
-                                    onChange={(e) => {
-                                      const next = e.target.checked
-                                        ? [...selected, opt.value]
-                                        : selected.filter(
-                                            (v) => v !== opt.value,
-                                          );
+                                  {country ? (
+                                    <>
+                                      <div className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                                        <CircleFlag
+                                          countryCode={country.alpha2.toLowerCase()}
+                                          height={20}
+                                        />
+                                      </div>
+                                      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                                        {country.name}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="flex-1 text-muted-foreground">
+                                      {code}
+                                    </span>
+                                  )}
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label="Remove"
+                                    onClick={() => {
+                                      const next = list.filter(
+                                        (_: string, i: number) => i !== idx,
+                                      );
                                       field.handleChange(next);
                                     }}
-                                  />
-                                  <span>{opt.label}</span>
-                                </label>
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               );
                             })}
+                            <CountryDropdown
+                              placeholder="Add country of citizenship"
+                              onChange={(country: Country) => {
+                                const code = country.alpha3;
+                                if (!list.includes(code)) {
+                                  field.handleChange([...list, code]);
+                                }
+                              }}
+                            />
                           </div>
                           <FieldError
                             errors={
-                              stepErrors.preferredWorkingArrangement
+                              stepErrors.countriesOfCitizenship
                                 ? [
                                     {
                                       message:
-                                        stepErrors.preferredWorkingArrangement,
+                                        stepErrors.countriesOfCitizenship,
                                     },
                                   ]
                                 : toFieldErrors(field.state.meta.errors)
@@ -1158,6 +1082,100 @@ function ApplicationOnboardingForm({
                         </Field>
                       );
                     }}
+                  </form.Field>
+
+                  <form.Field name="ethnicity">
+                    {(field) => (
+                      <Field
+                        data-field="ethnicity"
+                        data-invalid={
+                          !!(
+                            stepErrors.ethnicity ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>Ethnicity</FieldTitle>
+                        <Select
+                          value={field.state.value ?? ""}
+                          onValueChange={(v) => field.handleChange(v)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select ethnicity" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ETHNICITY_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FieldError
+                          errors={
+                            stepErrors.ethnicity
+                              ? [{ message: stepErrors.ethnicity }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="isVeteran">
+                    {(field) => (
+                      <Field
+                        data-field="isVeteran"
+                        data-invalid={
+                          !!(
+                            stepErrors.isVeteran ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>I am a veteran</FieldTitle>
+                        <RadioGroup
+                          value={String(field.state.value)}
+                          onValueChange={(v) =>
+                            field.handleChange(v === "true")
+                          }
+                          onBlur={field.handleBlur}
+                          aria-invalid={
+                            !!(
+                              stepErrors.isVeteran ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                          className="flex flex-row gap-4"
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem value="true" id="isVeteran-yes" />
+                            <label
+                              htmlFor="isVeteran-yes"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              Yes
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem value="false" id="isVeteran-no" />
+                            <label
+                              htmlFor="isVeteran-no"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              No
+                            </label>
+                          </div>
+                        </RadioGroup>
+                        <FieldError
+                          errors={
+                            stepErrors.isVeteran
+                              ? [{ message: stepErrors.isVeteran }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
                   </form.Field>
 
                   <form.Field name="languageProficiencies">
@@ -1180,7 +1198,7 @@ function ApplicationOnboardingForm({
                                 key={idx}
                                 className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end"
                               >
-                                <div className="sm:col-span-2 ">
+                                <div className="sm:col-span-2 space-y-2">
                                   <FieldTitle>Language</FieldTitle>
                                   <Input
                                     value={lp.language}
@@ -1195,11 +1213,11 @@ function ApplicationOnboardingForm({
                                     placeholder="e.g. English"
                                   />
                                 </div>
-                                <div>
+                                <div className="space-y-2">
                                   <FieldTitle>Proficiency</FieldTitle>
-                                  <Select
+                                  <ProficiencyPopover
                                     value={lp.proficiency}
-                                    onValueChange={(v) => {
+                                    onChange={(v) => {
                                       const next = [...list];
                                       next[idx] = {
                                         ...next[idx],
@@ -1207,21 +1225,7 @@ function ApplicationOnboardingForm({
                                       };
                                       field.handleChange(next);
                                     }}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue placeholder="Select" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {LANGUAGE_PROFICIENCY_OPTIONS.map((o) => (
-                                        <SelectItem
-                                          key={o.value}
-                                          value={o.value}
-                                        >
-                                          {o.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  />
                                 </div>
                                 <div className="sm:col-span-3">
                                   <Button
@@ -1348,5 +1352,76 @@ function ApplicationOnboardingForm({
         </Card>
       </div>
     </div>
+  );
+}
+
+function ProficiencyPopover({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = LANGUAGE_PROFICIENCY_OPTIONS.find((o) => o.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            "w-full justify-between px-3 py-2 h-8 overflow-hidden",
+            !selected && "text-muted-foreground",
+          )}
+        >
+          <span className="flex-1 min-w-0 truncate text-left">
+            {selected ? selected.label : "Select"}
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        collisionPadding={10}
+        side="bottom"
+        className="min-w-[--radix-popper-anchor-width] p-0"
+      >
+        <Command className="w-full max-h-[260px]">
+          <CommandList>
+            <div className="sticky top-0 z-10 bg-popover">
+              <CommandInput placeholder="Search proficiency..." />
+            </div>
+            <CommandEmpty>No matches.</CommandEmpty>
+            <CommandGroup>
+              {LANGUAGE_PROFICIENCY_OPTIONS.map((o) => (
+                <CommandItem
+                  key={o.value}
+                  value={`${o.label} ${o.description}`}
+                  className="flex items-start gap-2"
+                  onSelect={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="truncate">{o.label}</span>
+                    <span className="text-sm text-gray-500 truncate">
+                      {o.description}
+                    </span>
+                  </div>
+                  <CheckIcon
+                    className={cn(
+                      "ml-auto h-4 w-4 shrink-0 mt-1",
+                      o.value === value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/page-title";
-import { Loader2, X } from "lucide-react";
+import { CheckIcon, ChevronDown, Loader2, X } from "lucide-react";
 import { CircleFlag } from "react-circle-flags";
 import { countries } from "country-data-list";
 import {
@@ -28,6 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -40,6 +53,7 @@ import {
   WORKING_ARRANGEMENT_OPTIONS,
   type JobApplicationProfileFormValues,
 } from "@/services/jobApplicationProfile";
+import { cn } from "@/lib/utils";
 
 const GENDER_OPTIONS = [
   { value: "female", label: "Female" },
@@ -154,7 +168,9 @@ function isFormDirty(
   )
     return true;
 
-  return keys.some((k) => String(current[k] ?? "") !== String(initial[k] ?? ""));
+  return keys.some(
+    (k) => String(current[k] ?? "") !== String(initial[k] ?? ""),
+  );
 }
 
 function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
@@ -187,7 +203,8 @@ export default function ApplicationProfile() {
           ethnicity: profile.ethnicity ?? "",
           isOpenToRelocating: profile.isOpenToRelocating ?? null,
           noticePeriodDays: profile.noticePeriodDays ?? null,
-          preferredWorkingArrangement: profile.preferredWorkingArrangement ?? [],
+          preferredWorkingArrangement:
+            profile.preferredWorkingArrangement ?? [],
           languageProficiencies: profile.languageProficiencies ?? [],
           portfolioLink: profile.portfolioLink ?? null,
         });
@@ -730,7 +747,9 @@ function ProfileForm({
                     <FieldTitle>Open to relocating?</FieldTitle>
                     <RadioGroup
                       value={
-                        field.state.value === null ? "" : String(field.state.value)
+                        field.state.value === null
+                          ? ""
+                          : String(field.state.value)
                       }
                       onValueChange={(v) => {
                         if (v === "true") field.handleChange(true);
@@ -765,7 +784,9 @@ function ProfileForm({
                         </label>
                       </div>
                     </RadioGroup>
-                    <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
                   </Field>
                 )}
               </form.Field>
@@ -786,7 +807,9 @@ function ProfileForm({
                       onBlur={field.handleBlur}
                       placeholder="e.g. 14"
                     />
-                    <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
                   </Field>
                 )}
               </form.Field>
@@ -821,7 +844,9 @@ function ProfileForm({
                           );
                         })}
                       </div>
-                      <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
                     </Field>
                   );
                 }}
@@ -845,7 +870,10 @@ function ProfileForm({
                                 value={lp.language}
                                 onChange={(e) => {
                                   const next = [...list];
-                                  next[idx] = { ...next[idx], language: e.target.value };
+                                  next[idx] = {
+                                    ...next[idx],
+                                    language: e.target.value,
+                                  };
                                   field.handleChange(next);
                                 }}
                                 placeholder="e.g. English"
@@ -853,25 +881,14 @@ function ProfileForm({
                             </div>
                             <div>
                               <FieldTitle>Proficiency</FieldTitle>
-                              <Select
+                              <ProficiencyPopover
                                 value={lp.proficiency}
-                                onValueChange={(v) => {
+                                onChange={(v) => {
                                   const next = [...list];
                                   next[idx] = { ...next[idx], proficiency: v };
                                   field.handleChange(next);
                                 }}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {LANGUAGE_PROFICIENCY_OPTIONS.map((o) => (
-                                    <SelectItem key={o.value} value={o.value}>
-                                      {o.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              />
                             </div>
                             <div className="sm:col-span-3">
                               <Button
@@ -879,7 +896,9 @@ function ProfileForm({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  const next = list.filter((_v, i) => i !== idx);
+                                  const next = list.filter(
+                                    (_v, i) => i !== idx,
+                                  );
                                   field.handleChange(next);
                                 }}
                               >
@@ -902,7 +921,9 @@ function ProfileForm({
                           Add language
                         </Button>
                       </div>
-                      <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                      <FieldError
+                        errors={toFieldErrors(field.state.meta.errors)}
+                      />
                     </Field>
                   );
                 }}
@@ -915,12 +936,16 @@ function ProfileForm({
                     <Input
                       value={field.state.value ?? ""}
                       onChange={(e) =>
-                        field.handleChange(e.target.value === "" ? null : e.target.value)
+                        field.handleChange(
+                          e.target.value === "" ? null : e.target.value,
+                        )
                       }
                       onBlur={field.handleBlur}
                       placeholder="https://..."
                     />
-                    <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
                   </Field>
                 )}
               </form.Field>
@@ -952,5 +977,76 @@ function ProfileForm({
         </div>
       </form>
     </div>
+  );
+}
+
+function ProficiencyPopover({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = LANGUAGE_PROFICIENCY_OPTIONS.find((o) => o.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            "w-full justify-between px-3 py-2 h-10 overflow-hidden",
+            !selected && "text-muted-foreground",
+          )}
+        >
+          <span className="flex-1 min-w-0 truncate text-left">
+            {selected ? selected.label : "Select"}
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        collisionPadding={10}
+        side="bottom"
+        className="min-w-[--radix-popper-anchor-width] p-0"
+      >
+        <Command className="w-full max-h-[260px]">
+          <CommandList>
+            <div className="sticky top-0 z-10 bg-popover">
+              <CommandInput placeholder="Search proficiency..." />
+            </div>
+            <CommandEmpty>No matches.</CommandEmpty>
+            <CommandGroup>
+              {LANGUAGE_PROFICIENCY_OPTIONS.map((o) => (
+                <CommandItem
+                  key={o.value}
+                  value={`${o.label} ${o.description}`}
+                  className="flex items-start gap-2"
+                  onSelect={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="truncate">{o.label}</span>
+                    <span className="text-sm text-gray-500 truncate">
+                      {o.description}
+                    </span>
+                  </div>
+                  <CheckIcon
+                    className={cn(
+                      "ml-auto h-4 w-4 shrink-0 mt-1",
+                      o.value === value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
