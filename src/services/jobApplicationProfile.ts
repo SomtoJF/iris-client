@@ -1,6 +1,20 @@
 import { BaseRoute } from "./routes";
 import z from "zod";
 
+export const LANGUAGE_PROFICIENCY_OPTIONS = [
+  { value: "native_bilingual", label: "Native / Bilingual" },
+  { value: "full_professional", label: "Full Professional Proficiency" },
+  { value: "professional_working", label: "Professional Working Proficiency" },
+  { value: "limited_working", label: "Limited Working Proficiency" },
+  { value: "elementary", label: "Elementary Proficiency" },
+] as const;
+
+export const WORKING_ARRANGEMENT_OPTIONS = [
+  { value: "remote", label: "Remote work" },
+  { value: "hybrid", label: "Hybrid work (some days remote, some days in-office)" },
+  { value: "in_office", label: "Fully in-office" },
+] as const;
+
 export const jobApplicationProfileSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   lastName: z.string().min(1, "Last name is required").max(100),
@@ -19,9 +33,28 @@ export const jobApplicationProfileSchema = z.object({
   salaryMax: z.number().nullable().optional(),
   salaryCurrency: z.string().optional(),
   ethnicity: z.string().optional(),
+  isOpenToRelocating: z.boolean().nullable(),
+  noticePeriodDays: z.number().int().min(0).nullable(),
+  preferredWorkingArrangement: z
+    .array(z.enum(["remote", "hybrid", "in_office"]))
+    .default([]),
+  languageProficiencies: z
+    .array(
+      z.object({
+        language: z.string().min(1, "Language is required"),
+        proficiency: z.string().min(1, "Proficiency is required"),
+      }),
+    )
+    .default([]),
+  portfolioLink: z.string().url("Invalid URL").nullable().optional(),
 });
 
 export type JobApplicationProfileFormValues = z.infer<typeof jobApplicationProfileSchema>;
+
+export interface LanguageProficiency {
+  language: string;
+  proficiency: string;
+}
 
 export interface JobApplicationProfileResponse {
   id: string;
@@ -42,6 +75,11 @@ export interface JobApplicationProfileResponse {
   salaryMax?: number | null;
   salaryCurrency?: string;
   ethnicity?: string;
+  isOpenToRelocating: boolean | null;
+  noticePeriodDays: number | null;
+  preferredWorkingArrangement: Array<"remote" | "hybrid" | "in_office">;
+  languageProficiencies: LanguageProficiency[];
+  portfolioLink?: string | null;
 }
 
 export type UpdateJobApplicationProfileRequest = Omit<

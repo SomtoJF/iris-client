@@ -36,6 +36,8 @@ import {
   getJobApplicationProfile,
   upsertJobApplicationProfile,
   jobApplicationProfileSchema,
+  LANGUAGE_PROFICIENCY_OPTIONS,
+  WORKING_ARRANGEMENT_OPTIONS,
   type JobApplicationProfileFormValues,
 } from "@/services/jobApplicationProfile";
 
@@ -99,6 +101,11 @@ const defaultFormValues: JobApplicationProfileFormValues = {
   salaryMax: null,
   salaryCurrency: "USD",
   ethnicity: "",
+  isOpenToRelocating: null,
+  noticePeriodDays: null,
+  preferredWorkingArrangement: [],
+  languageProficiencies: [],
+  portfolioLink: null,
 };
 
 const countryList = countries.all.filter(
@@ -126,6 +133,11 @@ const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
     "salaryMin",
     "salaryMax",
     "salaryCurrency",
+    "isOpenToRelocating",
+    "noticePeriodDays",
+    "preferredWorkingArrangement",
+    "languageProficiencies",
+    "portfolioLink",
   ],
 };
 
@@ -150,6 +162,12 @@ export default function ApplicationOnboardingPage() {
           salaryMax: profile.salaryMax ?? null,
           salaryCurrency: profile.salaryCurrency ?? "USD",
           ethnicity: profile.ethnicity ?? "",
+          isOpenToRelocating: profile.isOpenToRelocating ?? null,
+          noticePeriodDays: profile.noticePeriodDays ?? null,
+          preferredWorkingArrangement:
+            profile.preferredWorkingArrangement ?? [],
+          languageProficiencies: profile.languageProficiencies ?? [],
+          portfolioLink: profile.portfolioLink ?? null,
         });
       } catch (err) {
         if (!cancelled) {
@@ -967,6 +985,324 @@ function ApplicationOnboardingForm({
                           errors={
                             stepErrors.ethnicity
                               ? [{ message: stepErrors.ethnicity }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="isOpenToRelocating">
+                    {(field) => (
+                      <Field
+                        data-field="isOpenToRelocating"
+                        data-invalid={
+                          !!(
+                            stepErrors.isOpenToRelocating ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>Open to relocating?</FieldTitle>
+                        <RadioGroup
+                          value={
+                            field.state.value === null
+                              ? ""
+                              : String(field.state.value)
+                          }
+                          onValueChange={(v) => {
+                            if (v === "true") field.handleChange(true);
+                            else if (v === "false") field.handleChange(false);
+                            else field.handleChange(null);
+                          }}
+                          onBlur={field.handleBlur}
+                          aria-invalid={
+                            !!(
+                              stepErrors.isOpenToRelocating ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                          className="flex flex-row gap-4"
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="true"
+                              id="isOpenToRelocating-yes"
+                            />
+                            <label
+                              htmlFor="isOpenToRelocating-yes"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              Yes
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="false"
+                              id="isOpenToRelocating-no"
+                            />
+                            <label
+                              htmlFor="isOpenToRelocating-no"
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              No
+                            </label>
+                          </div>
+                        </RadioGroup>
+                        <FieldError
+                          errors={
+                            stepErrors.isOpenToRelocating
+                              ? [{ message: stepErrors.isOpenToRelocating }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="noticePeriodDays">
+                    {(field) => (
+                      <Field
+                        data-field="noticePeriodDays"
+                        data-invalid={
+                          !!(
+                            stepErrors.noticePeriodDays ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>Notice period (days)</FieldTitle>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={field.state.value ?? ""}
+                          onChange={(e) =>
+                            field.handleChange(
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value),
+                            )
+                          }
+                          onBlur={field.handleBlur}
+                          placeholder="e.g. 14"
+                          aria-invalid={
+                            !!(
+                              stepErrors.noticePeriodDays ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        />
+                        <FieldError
+                          errors={
+                            stepErrors.noticePeriodDays
+                              ? [{ message: stepErrors.noticePeriodDays }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="preferredWorkingArrangement">
+                    {(field) => {
+                      const selected = field.state.value ?? [];
+                      return (
+                        <Field
+                          data-field="preferredWorkingArrangement"
+                          data-invalid={
+                            !!(
+                              stepErrors.preferredWorkingArrangement ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        >
+                          <FieldTitle>Preferred working arrangement</FieldTitle>
+                          <div className="space-y-2">
+                            {WORKING_ARRANGEMENT_OPTIONS.map((opt) => {
+                              const checked = selected.includes(opt.value);
+                              return (
+                                <label
+                                  key={opt.value}
+                                  className="flex items-start gap-2 text-sm"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="mt-0.5"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const next = e.target.checked
+                                        ? [...selected, opt.value]
+                                        : selected.filter(
+                                            (v) => v !== opt.value,
+                                          );
+                                      field.handleChange(next);
+                                    }}
+                                  />
+                                  <span>{opt.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <FieldError
+                            errors={
+                              stepErrors.preferredWorkingArrangement
+                                ? [
+                                    {
+                                      message:
+                                        stepErrors.preferredWorkingArrangement,
+                                    },
+                                  ]
+                                : toFieldErrors(field.state.meta.errors)
+                            }
+                          />
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+
+                  <form.Field name="languageProficiencies">
+                    {(field) => {
+                      const list = field.state.value ?? [];
+                      return (
+                        <Field
+                          data-field="languageProficiencies"
+                          data-invalid={
+                            !!(
+                              stepErrors.languageProficiencies ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        >
+                          <FieldTitle>Languages</FieldTitle>
+                          <div className="space-y-3">
+                            {list.map((lp, idx) => (
+                              <div
+                                key={idx}
+                                className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end"
+                              >
+                                <div className="sm:col-span-2 ">
+                                  <FieldTitle>Language</FieldTitle>
+                                  <Input
+                                    value={lp.language}
+                                    onChange={(e) => {
+                                      const next = [...list];
+                                      next[idx] = {
+                                        ...next[idx],
+                                        language: e.target.value,
+                                      };
+                                      field.handleChange(next);
+                                    }}
+                                    placeholder="e.g. English"
+                                  />
+                                </div>
+                                <div>
+                                  <FieldTitle>Proficiency</FieldTitle>
+                                  <Select
+                                    value={lp.proficiency}
+                                    onValueChange={(v) => {
+                                      const next = [...list];
+                                      next[idx] = {
+                                        ...next[idx],
+                                        proficiency: v,
+                                      };
+                                      field.handleChange(next);
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {LANGUAGE_PROFICIENCY_OPTIONS.map((o) => (
+                                        <SelectItem
+                                          key={o.value}
+                                          value={o.value}
+                                        >
+                                          {o.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="sm:col-span-3">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-400 hover:text-white hover:bg-red-400"
+                                    onClick={() => {
+                                      const next = list.filter(
+                                        (_v, i) => i !== idx,
+                                      );
+                                      field.handleChange(next);
+                                    }}
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                field.handleChange([
+                                  ...list,
+                                  { language: "", proficiency: "" },
+                                ])
+                              }
+                            >
+                              Add language
+                            </Button>
+                          </div>
+                          <FieldError
+                            errors={
+                              stepErrors.languageProficiencies
+                                ? [
+                                    {
+                                      message: stepErrors.languageProficiencies,
+                                    },
+                                  ]
+                                : toFieldErrors(field.state.meta.errors)
+                            }
+                          />
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+
+                  <form.Field name="portfolioLink">
+                    {(field) => (
+                      <Field
+                        data-field="portfolioLink"
+                        data-invalid={
+                          !!(
+                            stepErrors.portfolioLink ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>Portfolio link (optional)</FieldTitle>
+                        <Input
+                          value={field.state.value ?? ""}
+                          onChange={(e) =>
+                            field.handleChange(
+                              e.target.value === "" ? null : e.target.value,
+                            )
+                          }
+                          onBlur={field.handleBlur}
+                          placeholder="https://..."
+                          aria-invalid={
+                            !!(
+                              stepErrors.portfolioLink ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        />
+                        <FieldError
+                          errors={
+                            stepErrors.portfolioLink
+                              ? [{ message: stepErrors.portfolioLink }]
                               : toFieldErrors(field.state.meta.errors)
                           }
                         />
