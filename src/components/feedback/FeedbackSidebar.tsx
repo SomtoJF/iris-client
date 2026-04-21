@@ -153,10 +153,10 @@ export default function FeedbackSidebar() {
 
 function IssueRow({ issue }: { issue: IssueListItem }) {
   return (
-    <li className="rounded-md border border-transparent  hover:bg-gray-50">
-      <button
-        type="button"
-        className="w-full text-left px-3 py-2 overflow-hidden"
+    <li className="rounded-md border border-transparent hover:bg-gray-50">
+      <Link
+        to={`/feedback/${issue.id}`}
+        className="block w-full text-left px-3 py-2 overflow-hidden"
       >
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ function IssueRow({ issue }: { issue: IssueListItem }) {
             </div>
           </div>
         </div>
-      </button>
+      </Link>
     </li>
   );
 }

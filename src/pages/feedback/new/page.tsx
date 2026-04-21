@@ -185,7 +185,10 @@ export default function FeedbackNewIssuePage() {
                   <BlockNoteView
                     editor={editor}
                     theme="light"
-                    className="min-h-[200px]"
+                    className={cn(
+                      "min-h-[200px]",
+                      "[&_.bn-editor]:min-h-[200px] [&_.bn-editor]:px-3 [&_.bn-editor]:py-2",
+                    )}
                   />
                 </div>
                 <div className="text-xs text-muted-foreground">
