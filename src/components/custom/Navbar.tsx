@@ -1,6 +1,6 @@
 import { useUserStore } from "@/zustand/userstore";
 import { Link } from "react-router";
-import { SettingsIcon } from "lucide-react";
+import { Feather, SettingsIcon } from "lucide-react";
 
 export default function Navbar() {
   const { user } = useUserStore();
@@ -8,6 +8,13 @@ export default function Navbar() {
     <nav className="w-full border-b border-gray-200 flex items-center justify-between py-1 gap-4">
       <img src="/logo-transparent.png" alt="Iris" className="h-12 w-auto" />
       <div className="flex items-center gap-4">
+        <Link
+          to="/feedback"
+          className="text-sm flex no-wrap items-center text-muted-foreground hover:text-black"
+        >
+          <Feather className="w-4 h-4 mr-1" /> Feedback
+        </Link>
+
         <Link
           to="/settings/account"
           className="text-sm flex no-wrap items-center text-muted-foreground hover:text-black"

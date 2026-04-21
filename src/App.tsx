@@ -15,6 +15,9 @@ import SettingsLayout from "./layout/SettingsLayout";
 import ApplicationProfile from "./pages/settings/application-profile/ApplicationProfile";
 import Account from "./pages/settings/account/Account";
 import AdminPage from "./pages/settings/admin/page";
+import FeedbackPage from "./pages/feedback/page";
+import FeedbackLayout from "./layout/FeedbackLayout";
+import NewFeedbackPage from "./pages/feedback/new/page";
 
 function App() {
   const queryClient = new QueryClient();
@@ -42,6 +45,11 @@ function App() {
 
             <Route element={<ProtectedLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+
+            <Route element={<FeedbackLayout />}>
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/feedback/new" element={<NewFeedbackPage />} />
             </Route>
 
             <Route path="/settings" element={<SettingsLayout />}>

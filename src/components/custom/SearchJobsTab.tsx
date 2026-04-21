@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { countries } from "country-data-list";
 import dayjs from "dayjs";
 import { History, Loader2, Search } from "lucide-react";
+import { useSearchParams } from "react-router";
 
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
@@ -176,6 +177,7 @@ function HistoryEntryRow({
 
 export default function SearchJobsTab() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   // UI select value is always a string; "any" is our sentinel for "no cutoff".
   const [dateCutoff, setDateCutoff] = useState<string>("any");
@@ -183,6 +185,7 @@ export default function SearchJobsTab() {
   const [jobs, setJobs] = useState<DiscoveredJob[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [applyingUrl, setApplyingUrl] = useState<string | null>(null);
+  const didHydrateFromUrlRef = useRef(false);
 
   const nigeriaCountry = useMemo(() => {
     const c = countries.all.find((x) => x.alpha3 === "NGA");
@@ -224,12 +227,72 @@ export default function SearchJobsTab() {
 
   const locationAlpha2 = selectedCountry?.alpha2 ?? "NG";
 
+  const setSearchUrlParams = useCallback(
+    (args: {
+      searchQuery: string;
+      locationAlpha2: string;
+      dateCutoff: string;
+    }) => {
+      const next = new URLSearchParams(searchParams);
+      next.set("q", args.searchQuery);
+      next.set("loc", args.locationAlpha2.toUpperCase());
+      next.set("date", normalizeDateCutoff(args.dateCutoff));
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  useEffect(() => {
+    if (didHydrateFromUrlRef.current) return;
+    didHydrateFromUrlRef.current = true;
+
+    const qParam = searchParams.get("q")?.trim() ?? "";
+    const locParam = searchParams.get("loc")?.trim() ?? "";
+    const dateParam = normalizeDateCutoff(searchParams.get("date"));
+
+    const nextQuery = qParam;
+    const nextDateCutoff = dateParam;
+
+    let nextSelectedCountry: Country | null = null;
+    if (locParam) {
+      const match = countries.all.find(
+        (c) => c.alpha2?.toUpperCase() === locParam.toUpperCase(),
+      ) as Country | undefined;
+      nextSelectedCountry = match ?? null;
+    }
+
+    if (nextQuery) setSearchQuery(nextQuery);
+    setDateCutoff(nextDateCutoff);
+    if (nextSelectedCountry) setSelectedCountry(nextSelectedCountry);
+
+    // Run initial search once if URL contains a query.
+    if (nextQuery) {
+      // Ensure URL includes all search params when we execute a search (even if
+      // the initial URL only had a subset).
+      setSearchUrlParams({
+        searchQuery: nextQuery,
+        locationAlpha2: nextSelectedCountry?.alpha2 ?? "NG",
+        dateCutoff: nextDateCutoff,
+      });
+      searchMutation.mutate({
+        searchQuery: nextQuery,
+        location: nextSelectedCountry?.alpha2 ?? "NG",
+        dateCutoff: nextDateCutoff === "any" ? null : nextDateCutoff,
+      });
+    }
+  }, [searchMutation, searchParams, setSearchUrlParams]);
+
   const handleSearch = () => {
     const q = searchQuery.trim();
     if (!q) {
       toast.error("Enter a search query");
       return;
     }
+    setSearchUrlParams({
+      searchQuery: q,
+      locationAlpha2,
+      dateCutoff,
+    });
     searchMutation.mutate({
       searchQuery: q,
       location: locationAlpha2,
@@ -262,6 +325,19 @@ export default function SearchJobsTab() {
       toast.info("Location was not recognized; pick a country from the list.");
     }
     setHistoryOpen(false);
+
+    const normalizedDate = normalizeDateCutoff(entry.dateCutoff);
+    const locAlpha2 = match?.alpha2 ?? entry.location ?? "NG";
+    setSearchUrlParams({
+      searchQuery: entry.searchQuery,
+      locationAlpha2: locAlpha2,
+      dateCutoff: normalizedDate,
+    });
+    searchMutation.mutate({
+      searchQuery: entry.searchQuery,
+      location: locAlpha2,
+      dateCutoff: normalizedDate === "any" ? null : normalizedDate,
+    });
   };
 
   return (
@@ -323,7 +399,7 @@ export default function SearchJobsTab() {
               ) : (
                 <Search className="h-4 w-4" aria-hidden />
               )}
-              <span className="ml-2">Search</span>
+              <span className="ml-0.5">Search</span>
             </Button>
             <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
               <PopoverTrigger asChild>
