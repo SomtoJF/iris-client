@@ -221,7 +221,7 @@ export default function ApplicationProfile() {
 
   return (
     <div className="w-full">
-      <ProfileForm initialData={initialData} />;
+      <ProfileForm initialData={initialData} />
     </div>
   );
 }
@@ -260,7 +260,7 @@ function ProfileForm({
   });
 
   return (
-    <div className="max-w-2xl h-fit">
+    <div className="mx-auto h-fit w-full max-w-2xl">
       <header className="mb-6 space-y-2">
         <h1 className="text-xl font-semibold">Application Profile</h1>
         <p className="text-sm text-muted-foreground">

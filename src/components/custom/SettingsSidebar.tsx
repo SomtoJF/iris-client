@@ -15,7 +15,7 @@ export default function SettingsSidebar({ items }: SettingsSidebarProps) {
   const location = useLocation();
 
   return (
-    <aside className="w-48 h-screen border-r flex flex-col shrink-0 fixed bg-inherit">
+    <aside className="fixed left-0 top-0 z-20 flex h-screen w-[360px] shrink-0 flex-col border-r border-border bg-background">
       <div className="px-4 pt-6 pb-2">
         <h2 className="text-sm font-semibold tracking-wide">Settings</h2>
       </div>

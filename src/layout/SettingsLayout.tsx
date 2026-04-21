@@ -64,9 +64,9 @@ export default function SettingsLayout() {
   }
 
   return (
-    <div className="flex h-screen max-w-screen-2xl">
+    <div className="flex h-screen w-full">
       <SettingsSidebar items={settingsSidebarItems} />
-      <main className="flex-1 py-10 px-8 w-full ml-48">
+      <main className="ml-[360px] min-w-0 w-full flex-1 px-8 py-10">
         <Outlet />
       </main>
     </div>

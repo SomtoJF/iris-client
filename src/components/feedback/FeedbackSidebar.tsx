@@ -46,8 +46,8 @@ export default function FeedbackSidebar() {
   const hasNext = page * limit < total;
 
   return (
-    <aside className="flex h-full min-h-0 w-[360px] shrink-0 flex-col border-r border-gray-200 bg-white">
-      <div className="flex min-h-0 flex-1 flex-col p-4">
+    <aside className="fixed left-0 top-0 z-20 flex h-screen w-[360px] shrink-0 flex-col border-r border-gray-200 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <div className="shrink-0">
           <Link
             to="/dashboard"
