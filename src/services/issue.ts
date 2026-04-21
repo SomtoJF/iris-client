@@ -2,6 +2,13 @@ import { BaseRoute } from "./routes";
 
 export type IssueType = "bug" | "feature_request";
 
+export interface IssueJobApplication {
+  id: string;
+  title: string;
+  companyName: string;
+  url: string;
+}
+
 export interface IssueListItem {
   id: string;
   title: string;
@@ -26,6 +33,7 @@ export interface IssueDetail {
   title: string;
   type: IssueType;
   jobApplicationId: string;
+  jobApplication?: IssueJobApplication;
   contentJson: unknown;
   contentText: string;
   summary: string;
@@ -62,7 +70,8 @@ export async function fetchIssues(params: {
   limit: number;
   search?: string;
   type?: IssueType;
-  resolved?: boolean;
+  /** Omit or pass `null` to include both open and resolved issues. */
+  resolved?: boolean | null;
 }): Promise<FetchIssuesResponse> {
   const sp = new URLSearchParams({
     page: String(params.page),
@@ -70,7 +79,7 @@ export async function fetchIssues(params: {
   });
   if (params.search) sp.set("search", params.search);
   if (params.type) sp.set("type", params.type);
-  if (typeof params.resolved === "boolean")
+  if (params.resolved === true || params.resolved === false)
     sp.set("resolved", String(params.resolved));
 
   const response = await fetch(`${BaseRoute}/issues?${sp}`, {

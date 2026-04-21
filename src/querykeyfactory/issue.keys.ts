@@ -8,7 +8,7 @@ const issueKeys = {
     limit: number;
     search?: string;
     type?: IssueType;
-    resolved?: boolean;
+    resolved?: boolean | null;
   }) => [...issueKeys.lists(), params] as const,
   details: () => [...issueKeys.all(), "detail"] as const,
   detail: (id: string) => [...issueKeys.details(), id] as const,

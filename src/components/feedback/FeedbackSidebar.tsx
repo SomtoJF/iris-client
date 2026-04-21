@@ -30,7 +30,7 @@ export default function FeedbackSidebar() {
       page,
       limit,
       search: debouncedSearch || undefined,
-      resolved: true as const,
+      resolved: null as boolean | null,
     }),
     [page, limit, debouncedSearch],
   );
@@ -46,8 +46,8 @@ export default function FeedbackSidebar() {
   const hasNext = page * limit < total;
 
   return (
-    <aside className="w-[360px] shrink-0 border-r border-gray-200 bg-white">
-      <div className="flex h-full flex-col p-4">
+    <aside className="flex h-full min-h-0 w-[360px] shrink-0 flex-col border-r border-gray-200 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col p-4">
         <div className="shrink-0">
           <Link
             to="/dashboard"

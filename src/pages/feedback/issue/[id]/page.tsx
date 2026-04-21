@@ -25,7 +25,13 @@ import { useUserStore } from "@/zustand/userstore";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { ArrowBigUp, CheckCircle2, MessageSquare } from "lucide-react";
+import {
+  ArrowBigUp,
+  CheckCircle2,
+  Copy,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 
@@ -273,9 +279,61 @@ export default function FeedbackIssuePage() {
                   />
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-muted-foreground rounded-md p-2 bg-gray-50 mb-2">
-                      {issue.summary}
+                    <div className="text-sm mb-3 rounded-md p-2 bg-gray-50 ">
+                      <h3 className="text-sm font-medium mb-1 flex items-center gap-1">
+                        <Sparkles className="h-4 w-4 text-purple-500" />
+                        Summary
+                      </h3>
+                      <div className="text-sm text-muted-foreground">
+                        {issue.summary}
+                      </div>
                     </div>
+
+                    {issue.jobApplication ? (
+                      <div className="rounded-md border border-border bg-muted/30 p-3 mb-3 space-y-2">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Linked job application
+                        </p>
+                        <div>
+                          <p className="text-sm font-medium leading-snug">
+                            {issue.jobApplication.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {issue.jobApplication.companyName}
+                          </p>
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1">
+                          <a
+                            href={issue.jobApplication.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="min-w-0 w-fit truncate text-sm text-primary underline-offset-4 hover:underline"
+                          >
+                            {issue.jobApplication.url}
+                          </a>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            aria-label="Copy job application URL"
+                            onClick={async () => {
+                              const url = issue.jobApplication?.url;
+                              if (!url) return;
+                              try {
+                                await navigator.clipboard.writeText(url);
+                                toast.success("URL copied");
+                              } catch {
+                                toast.error("Failed to copy URL");
+                              }
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+
                     <div className="prose prose-sm max-w-none">
                       <pre className="whitespace-pre-wrap font-sans text-sm leading-6">
                         {issue.contentText}
