@@ -33,6 +33,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import { cn } from "@/lib/utils";
 
+import "@blocknote/core/fonts/inter.css";
+import { en } from "@blocknote/core/locales";
+import { useCreateBlockNote } from "@blocknote/react";
+import { BlockNoteView } from "@blocknote/shadcn";
+import "@blocknote/shadcn/style.css";
+
 const ISSUE_TYPES: { value: IssueType; label: string }[] = [
   { value: "bug", label: "Bug" },
   { value: "feature_request", label: "Feature request" },
@@ -51,34 +57,37 @@ export default function FeedbackNewIssuePage() {
   const [jobApplicationLabel, setJobApplicationLabel] = useState<
     string | undefined
   >(undefined);
-  const [descriptionJSON, setDescriptionJSON] = useState<string>("");
   const [descriptionText, setDescriptionText] = useState<string>("");
 
-  const summary = useMemo(() => {
-    const t = descriptionText.trim().replace(/\s+/g, " ");
-    if (!t) return "";
-    return t.length > 160 ? `${t.slice(0, 160)}…` : t;
-  }, [descriptionText]);
+  const editor = useCreateBlockNote({
+    dictionary: {
+      ...en,
+      placeholders: {
+        ...en.placeholders,
+        emptyDocument:
+          "Include details, steps to reproduce, expected vs actual behavior…",
+        default:
+          "Include details, steps to reproduce, expected vs actual behavior…",
+      },
+    },
+  });
 
   const onSubmit = async () => {
     if (!title.trim()) {
       toast.error("Title is required");
       return;
     }
-    if (!summary) {
-      toast.error("Description is required");
-      return;
-    }
 
     try {
       setIsSubmitting(true);
+      const contentJson = JSON.stringify(editor.document);
+      const contentText = await editor.blocksToMarkdownLossy(editor.document);
       await createIssue({
         title: title.trim(),
         type,
         jobApplicationId,
-        description:
-          descriptionJSON || JSON.stringify({ type: "doc", content: [] }),
-        summary,
+        contentJson,
+        contentText,
       });
       toast.success("Issue created");
       queryClient.invalidateQueries({ queryKey: queryKeys.issue.lists() });
@@ -151,15 +160,17 @@ export default function FeedbackNewIssuePage() {
 
               <div className="grid gap-2">
                 <Label>Description</Label>
-                <div className="rounded-lg border border-gray-200 overflow-hidden">
-                  {/* <SimpleEditor
-                    value={descriptionJSON}
-                    onChange={(nextJSON, nextText) => {
-                      setDescriptionJSON(nextJSON);
-                      setDescriptionText(nextText);
+                <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                  <BlockNoteView
+                    editor={editor}
+                    theme="light"
+                    onChange={async () => {
+                      const md = await editor.blocksToMarkdownLossy(
+                        editor.document,
+                      );
+                      setDescriptionText(md);
                     }}
-                    placeholder="Include details, steps to reproduce, expected vs actual behavior…"
-                  /> */}
+                  />
                 </div>
                 <div className="text-xs text-muted-foreground">
                   This will be used to generate the one-line summary in the

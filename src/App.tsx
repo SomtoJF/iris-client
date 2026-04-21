@@ -18,6 +18,7 @@ import AdminPage from "./pages/settings/admin/page";
 import FeedbackPage from "./pages/feedback/page";
 import FeedbackLayout from "./layout/FeedbackLayout";
 import NewFeedbackPage from "./pages/feedback/new/page";
+import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 
 function App() {
   const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function App() {
             <Route element={<FeedbackLayout />}>
               <Route path="/feedback" element={<FeedbackPage />} />
               <Route path="/feedback/new" element={<NewFeedbackPage />} />
+              <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
             </Route>
 
             <Route path="/settings" element={<SettingsLayout />}>

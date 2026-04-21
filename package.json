@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
+    "@blocknote/core": "^0.48.1",
+    "@blocknote/react": "^0.48.1",
+    "@blocknote/shadcn": "^0.48.1",
     "@fontsource-variable/geist": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/vite": "^4.2.0",

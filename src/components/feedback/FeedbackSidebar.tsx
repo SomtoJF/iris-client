@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Link, useLocation } from "react-router";
+import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { LayoutGrid } from "lucide-react";
 
 export default function FeedbackSidebar() {
-  const location = useLocation();
-  const isFeed = location.pathname === "/feedback";
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -49,51 +47,58 @@ export default function FeedbackSidebar() {
 
   return (
     <aside className="w-[360px] shrink-0 border-r border-gray-200 bg-white">
-      <div className="p-4">
-        <Link to="/feedback">
-          <Button
-            type="button"
-            variant="default"
-            className="w-full justify-start rounded-md inline-flex items-center gap-2 h-fit py-4 bg-purple-100 text-gray-800 border"
-          >
-            <span className="bg-purple-600 text-white rounded-sm p-2 flex items-center justify-center">
-              <LayoutGrid className="w-5 h-5" />
-            </span>{" "}
-            <div className="flex flex-col items-start">
-              <span>All Issues Feed</span>
-              <p className="text-xs text-gray-500">
-                Browse and manage open feedback issues
-              </p>
-            </div>
-          </Button>
-        </Link>
+      <div className="flex h-full flex-col p-4">
+        <div className="shrink-0">
+          <Link to="/feedback">
+            <Button
+              type="button"
+              variant="default"
+              className="w-full justify-start rounded-md inline-flex items-center gap-2 h-fit py-4 bg-purple-100 text-gray-800 border"
+            >
+              <span className="bg-purple-600 text-white rounded-sm p-2 flex items-center justify-center">
+                <LayoutGrid className="w-5 h-5" />
+              </span>{" "}
+              <div className="flex flex-col items-start">
+                <span>All Issues Feed</span>
+                <p className="text-xs text-gray-500">
+                  Browse and manage open feedback issues
+                </p>
+              </div>
+            </Button>
+          </Link>
 
-        <div className="mt-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full bg-purple-600 text-white hover:bg-purple-700 hover:text-white"
-            asChild
-          >
-            <Link to="/feedback/new">Add new issue</Link>
-          </Button>
-        </div>
-
-        <div className="mt-3">
-          <Input
-            placeholder="Search issues..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <Separator className="my-4" />
-
-        <div className="text-sm">
-          <div className={cn("py-2", "text-xs uppercase tracking-wide")}>
-            Issues
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full bg-purple-600 text-white hover:bg-purple-700 hover:text-white"
+              asChild
+            >
+              <Link to="/feedback/new">Add new issue</Link>
+            </Button>
           </div>
 
+          <div className="mt-3">
+            <Input
+              placeholder="Search issues..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <Separator className="my-4" />
+
+          <div
+            className={cn(
+              "py-2",
+              "text-xs uppercase tracking-wide font-medium",
+            )}
+          >
+            Issues
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto text-sm">
           {isPending ? (
             <div className="py-6 text-center text-muted-foreground">
               Loading…
@@ -113,29 +118,34 @@ export default function FeedbackSidebar() {
               ))}
             </ul>
           )}
-
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasPrev}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </Button>
-            <div className="text-xs text-muted-foreground">Page {page}</div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!hasNext}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
         </div>
+
+        {issues.length > 0 && (
+          <div className="mt-auto pt-4">
+            <Separator className="mb-4" />
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!hasPrev}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Prev
+              </Button>
+              <div className="text-xs text-muted-foreground">Page {page}</div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!hasNext}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -143,7 +153,7 @@ export default function FeedbackSidebar() {
 
 function IssueRow({ issue }: { issue: IssueListItem }) {
   return (
-    <li className="rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50">
+    <li className="rounded-md border border-transparent  hover:bg-gray-50">
       <button
         type="button"
         className="w-full text-left px-3 py-2 overflow-hidden"
@@ -156,7 +166,7 @@ function IssueRow({ issue }: { issue: IssueListItem }) {
                 {issue.type === "feature_request" ? "Feature" : "Bug"}
               </Badge>
             </div>
-            <div className="text-sm text-gray-500 truncate mt-0.5">
+            <div className="text-xs text-gray-500 truncate mt-0.5">
               {issue.summary}
             </div>
           </div>

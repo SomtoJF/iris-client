@@ -52,8 +52,8 @@ export async function createIssue(payload: {
   title: string;
   type: IssueType;
   jobApplicationId?: string;
-  description: string;
-  summary?: string;
+  contentJson: string;
+  contentText: string;
 }): Promise<void> {
   const response = await fetch(`${BaseRoute}/issue`, {
     method: "POST",
