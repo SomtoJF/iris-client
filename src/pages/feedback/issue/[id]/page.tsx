@@ -164,6 +164,10 @@ export default function FeedbackIssuePage() {
 
   const onSubmitComment = async () => {
     if (!issue) return;
+    if (issue.isResolved) {
+      toast.error("Comments are disabled on resolved issues");
+      return;
+    }
     try {
       setIsSubmittingComment(true);
       const commentJson = JSON.stringify(editor.document);
@@ -370,22 +374,28 @@ export default function FeedbackIssuePage() {
                 <div className="text-sm font-semibold">Add a comment</div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-                  <BlockNoteView
-                    editor={editor}
-                    theme="light"
-                    className={cn(
-                      "min-h-[200px]",
-                      "[&_.bn-editor]:min-h-[200px] [&_.bn-editor]:px-3 [&_.bn-editor]:py-2",
-                    )}
-                  />
-                </div>
+                {issue.isResolved ? (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-muted-foreground">
+                    Comments are disabled on resolved issues.
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    <BlockNoteView
+                      editor={editor}
+                      theme="light"
+                      className={cn(
+                        "min-h-[200px]",
+                        "[&_.bn-editor]:min-h-[200px] [&_.bn-editor]:px-3 [&_.bn-editor]:py-2",
+                      )}
+                    />
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="justify-end gap-2">
                 <Button
                   type="button"
                   onClick={onSubmitComment}
-                  disabled={isSubmittingComment}
+                  disabled={isSubmittingComment || issue.isResolved}
                 >
                   {isSubmittingComment ? "Posting…" : "Post comment"}
                 </Button>
