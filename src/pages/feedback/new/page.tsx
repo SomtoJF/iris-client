@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 import "@blocknote/core/fonts/inter.css";
 import { en } from "@blocknote/core/locales";
+import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/shadcn";
 import "@blocknote/shadcn/style.css";
@@ -57,9 +58,29 @@ export default function FeedbackNewIssuePage() {
   const [jobApplicationLabel, setJobApplicationLabel] = useState<
     string | undefined
   >(undefined);
-  const [descriptionText, setDescriptionText] = useState<string>("");
+
+  const schema = useMemo(() => {
+    const disallowedBlockTypes = new Set([
+      "heading",
+      "image",
+      "video",
+      "audio",
+      "file",
+    ]);
+
+    const blockSpecs = Object.fromEntries(
+      Object.entries(defaultBlockSpecs).filter(
+        ([blockType]) => !disallowedBlockTypes.has(blockType),
+      ),
+    );
+
+    return BlockNoteSchema.create({
+      blockSpecs,
+    });
+  }, []);
 
   const editor = useCreateBlockNote({
+    schema,
     dictionary: {
       ...en,
       placeholders: {
@@ -164,12 +185,7 @@ export default function FeedbackNewIssuePage() {
                   <BlockNoteView
                     editor={editor}
                     theme="light"
-                    onChange={async () => {
-                      const md = await editor.blocksToMarkdownLossy(
-                        editor.document,
-                      );
-                      setDescriptionText(md);
-                    }}
+                    className="min-h-[200px]"
                   />
                 </div>
                 <div className="text-xs text-muted-foreground">
