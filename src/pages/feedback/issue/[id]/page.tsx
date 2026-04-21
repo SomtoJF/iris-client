@@ -214,12 +214,23 @@ export default function FeedbackIssuePage() {
                   <h1 className="text-2xl font-extrabold tracking-tight text-balance">
                     {issue.title}
                   </h1>
-                  <Badge variant="secondary">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "border",
+                      issue.type === "feature_request"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : "bg-red-50 text-red-700 border-red-200",
+                    )}
+                  >
                     {issue.type === "feature_request" ? "Feature" : "Bug"}
                   </Badge>
                   {issue.isResolved && (
-                    <Badge variant="outline" className="gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    <Badge
+                      variant="outline"
+                      className="gap-1 text-green-700 border-green-200 bg-green-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                       Resolved
                     </Badge>
                   )}

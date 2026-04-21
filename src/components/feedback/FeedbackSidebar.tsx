@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchIssues, type IssueListItem } from "@/services/issue";
 import { queryKeys } from "@/querykeyfactory";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid } from "lucide-react";
+import { ArrowLeft, CheckCircle2, LayoutGrid } from "lucide-react";
 
 export default function FeedbackSidebar() {
   const [search, setSearch] = useState("");
@@ -30,7 +30,7 @@ export default function FeedbackSidebar() {
       page,
       limit,
       search: debouncedSearch || undefined,
-      resolved: false as const,
+      resolved: true as const,
     }),
     [page, limit, debouncedSearch],
   );
@@ -49,6 +49,14 @@ export default function FeedbackSidebar() {
     <aside className="w-[360px] shrink-0 border-r border-gray-200 bg-white">
       <div className="flex h-full flex-col p-4">
         <div className="shrink-0">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-1.5 pb-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Back to dashboard
+          </Link>
+
           <Link to="/feedback">
             <Button
               type="button"
@@ -162,7 +170,18 @@ function IssueRow({ issue }: { issue: IssueListItem }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-medium truncate">{issue.title}</span>
-              <Badge variant="secondary" className="shrink-0">
+              {issue.isResolved && (
+                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+              )}
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "shrink-0 border",
+                  issue.type === "feature_request"
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-red-50 text-red-700 border-red-200",
+                )}
+              >
                 {issue.type === "feature_request" ? "Feature" : "Bug"}
               </Badge>
             </div>
