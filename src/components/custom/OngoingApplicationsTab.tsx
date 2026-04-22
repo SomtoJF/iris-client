@@ -7,6 +7,7 @@ import {
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertCircle,
   ExternalLink,
   Loader2,
   RotateCcw,
@@ -26,6 +27,11 @@ import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import UserActionDialog from "./UserActionDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 dayjs.extend(relativeTime);
 
@@ -148,14 +154,30 @@ function buildColumns(
           row.original.status,
         );
         const isRetrying = retryingIds.has(row.original.id);
+        const failureReason =
+          row.original.status === "failed" ? row.original.failureReason : null;
         return (
           <div className="flex items-center">
-            <div className="flex items-center">
-              <span className={cn("w-3 h-3 rounded-full mr-2", iconStyles)} />
-              <p className={cn(textStyles)}>
-                {toTitleCase(row.original.status)}
-              </p>
-            </div>
+            {failureReason ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center cursor-pointer">
+                    <AlertCircle className="w-3.5 h-3.5 mr-2 text-red-500" />
+                    <p className={cn(textStyles)}>
+                      {toTitleCase(row.original.status)}
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6}>{failureReason}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className="flex items-center">
+                <span className={cn("w-3 h-3 rounded-full mr-2", iconStyles)} />
+                <p className={cn(textStyles)}>
+                  {toTitleCase(row.original.status)}
+                </p>
+              </div>
+            )}
             {row.original.status === "failed" && (
               <button
                 className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"

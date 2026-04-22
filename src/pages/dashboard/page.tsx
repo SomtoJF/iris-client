@@ -118,7 +118,7 @@ export default function Dashboard() {
               value="ongoing-applications"
               className="rounded-none border-0 bg-transparent px-4 py-2 shadow-none data-active:bg-transparent data-active:shadow-none focus-visible:ring-0 focus-visible:outline-none after:hidden data-active:border-b-2 data-active:border-b-purple-500 data-active:border-t-0 data-active:-mb-px text-gray-600 data-active:text-gray-900 data-active:font-medium"
             >
-              Ongoing Applications
+              My Applications
             </TabsTrigger>
           </TabsList>
           <TabsContent value="search-jobs">

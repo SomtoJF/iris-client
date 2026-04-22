@@ -19,6 +19,7 @@ import FeedbackPage from "./pages/feedback/page";
 import FeedbackLayout from "./layout/FeedbackLayout";
 import NewFeedbackPage from "./pages/feedback/new/page";
 import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 function App() {
   const queryClient = new QueryClient();
@@ -26,43 +27,45 @@ function App() {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <RealtimeEventProvider>
-          <Toaster />
-          <Routes>
-            <Route path="/" element={<Home />} />
+          <TooltipProvider>
+            <Toaster />
+            <Routes>
+              <Route path="/" element={<Home />} />
 
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-            </Route>
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+              </Route>
 
-            <Route
-              path="/onboarding/resume"
-              element={<ResumeOnboardingPage />}
-            />
-            <Route
-              path="/onboarding/application"
-              element={<ApplicationOnboardingPage />}
-            />
-
-            <Route element={<ProtectedLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-            </Route>
-
-            <Route element={<FeedbackLayout />}>
-              <Route path="/feedback" element={<FeedbackPage />} />
-              <Route path="/feedback/new" element={<NewFeedbackPage />} />
-              <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
-            </Route>
-
-            <Route path="/settings" element={<SettingsLayout />}>
               <Route
-                path="application-profile"
-                element={<ApplicationProfile />}
+                path="/onboarding/resume"
+                element={<ResumeOnboardingPage />}
               />
-              <Route path="account" element={<Account />} />
-              <Route path="admin" element={<AdminPage />} />
-            </Route>
-          </Routes>
+              <Route
+                path="/onboarding/application"
+                element={<ApplicationOnboardingPage />}
+              />
+
+              <Route element={<ProtectedLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
+
+              <Route element={<FeedbackLayout />}>
+                <Route path="/feedback" element={<FeedbackPage />} />
+                <Route path="/feedback/new" element={<NewFeedbackPage />} />
+                <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
+              </Route>
+
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route
+                  path="application-profile"
+                  element={<ApplicationProfile />}
+                />
+                <Route path="account" element={<Account />} />
+                <Route path="admin" element={<AdminPage />} />
+              </Route>
+            </Routes>
+          </TooltipProvider>
         </RealtimeEventProvider>
       </QueryClientProvider>
     </BrowserRouter>
