@@ -7,6 +7,7 @@ export interface IssueJobApplication {
   title: string;
   companyName: string;
   url: string;
+  status?: string;
 }
 
 export interface IssueListItem {
@@ -40,6 +41,8 @@ export interface IssueDetail {
   isResolved: boolean;
   ownerId: string;
   isUserOwner: boolean;
+  isOwnerAdmin: boolean;
+  ownerEmail: string;
   upvoteCount: number;
   userUpvoted: boolean;
   createdAt: string;
@@ -52,6 +55,8 @@ export interface IssueComment {
   commentText: string;
   ownerId: string;
   isUserOwner: boolean;
+  isOwnerAdmin: boolean;
+  ownerEmail: string;
   upvoteCount: number;
   userUpvoted: boolean;
   createdAt: string;

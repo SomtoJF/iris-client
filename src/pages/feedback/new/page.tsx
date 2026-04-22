@@ -247,6 +247,41 @@ function JobApplicationPicker({
     }
   };
 
+  type JobStatus = JobApplication["status"];
+
+  function getStatusTagConfig(status: JobStatus): {
+    textStyles: string;
+    iconStyles: string;
+  } {
+    switch (status) {
+      case "applied":
+        return {
+          textStyles: "text-green-600",
+          iconStyles: "bg-green-600 opacity-50",
+        };
+      case "processing":
+        return {
+          textStyles: "text-amber-500 animate-pulse",
+          iconStyles: "bg-amber-500 animate-pulse opacity-50",
+        };
+      case "failed":
+        return {
+          textStyles: "text-red-500",
+          iconStyles: "bg-red-500 opacity-50",
+        };
+      case "blocked":
+        return {
+          textStyles: "text-pink-500",
+          iconStyles: "bg-pink-500 opacity-50",
+        };
+      default:
+        return {
+          textStyles: "text-muted-foreground",
+          iconStyles: "bg-muted-foreground animate-pulse",
+        };
+    }
+  }
+
   return (
     <Popover
       open={open}
@@ -296,28 +331,52 @@ function JobApplicationPicker({
               >
                 <span className="text-sm text-muted-foreground">(None)</span>
               </CommandItem>
-              {results.map((ja) => (
-                <CommandItem
-                  key={ja.id}
-                  value={`${ja.jobTitle} ${ja.companyName}`}
-                  className="flex items-start gap-2"
-                  onSelect={() => {
-                    onPick(ja);
-                    setOpen(false);
-                  }}
-                >
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="truncate">{ja.jobTitle}</span>
-                    <span className="text-sm text-gray-500 truncate">
-                      {ja.companyName}
-                    </span>
-                  </div>
-                </CommandItem>
-              ))}
+              {results.map((ja) => {
+                const { iconStyles, textStyles } = getStatusTagConfig(
+                  ja.status,
+                );
+
+                return (
+                  <CommandItem
+                    key={ja.id}
+                    value={`${ja.jobTitle} ${ja.companyName}`}
+                    className="flex items-start gap-2"
+                    onSelect={() => {
+                      onPick(ja);
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="truncate">{ja.jobTitle}</span>
+                      <div className="flex gap-2">
+                        <span className="text-sm text-gray-500 truncate">
+                          {" "}
+                          {ja.companyName}
+                        </span>
+                        <div className="flex items-center">
+                          <span
+                            className={cn(
+                              "w-3 h-3 rounded-full mr-2",
+                              iconStyles,
+                            )}
+                          />
+                          <p className={cn(textStyles)}>
+                            {toTitleCase(ja.status)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
+}
+
+function toTitleCase(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

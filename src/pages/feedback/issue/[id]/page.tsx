@@ -46,6 +46,40 @@ dayjs.extend(relativeTime);
 
 const COMMENTS_LIMIT = 20;
 
+function toTitleCase(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getJobStatusTextStyles(status?: string): string {
+  switch (status) {
+    case "applied":
+      return "text-green-600";
+    case "processing":
+      return "text-amber-500 animate-pulse";
+    case "failed":
+      return "text-red-500";
+    case "blocked":
+      return "text-pink-500";
+    default:
+      return "text-muted-foreground";
+  }
+}
+
+function getJobStatusIconStyles(status?: string): string {
+  switch (status) {
+    case "applied":
+      return "bg-green-600 opacity-50";
+    case "processing":
+      return "bg-amber-500 animate-pulse opacity-50";
+    case "failed":
+      return "bg-red-500 opacity-50";
+    case "blocked":
+      return "bg-pink-500 opacity-50";
+    default:
+      return "bg-muted-foreground animate-pulse";
+  }
+}
+
 export default function FeedbackIssuePage() {
   const { id } = useParams();
   const { user } = useUserStore();
@@ -246,7 +280,15 @@ export default function FeedbackIssuePage() {
                   )}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Asked {dayjs(issue.createdAt).fromNow()} · Updated{" "}
+                  <span className="font-medium text-gray-800">
+                    {issue.ownerEmail}{" "}
+                    {issue.isUserOwner && (
+                      <span className="text-[10px] border px-1 py-0.5 rounded-md text-green-600 bg-green-50 border-green-200">
+                        You
+                      </span>
+                    )}
+                  </span>{" "}
+                  · Asked {dayjs(issue.createdAt).fromNow()} · Updated{" "}
                   {dayjs(issue.updatedAt).fromNow()}
                 </div>
               </div>
@@ -291,15 +333,37 @@ export default function FeedbackIssuePage() {
 
                     {issue.jobApplication ? (
                       <div className="rounded-md border border-border bg-muted/30 p-3 mb-3 space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <p className="text-xs font-bold uppercase  text-muted-foreground">
                           Linked job application
                         </p>
                         <div>
                           <p className="text-sm font-medium leading-snug">
                             {issue.jobApplication.title}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {issue.jobApplication.companyName}
+                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <span>{issue.jobApplication.companyName}</span>
+                            {issue.jobApplication.status ? (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-2 text-sm leading-5 px-2 rounded-full",
+                                  getJobStatusTextStyles(
+                                    issue.jobApplication.status,
+                                  ),
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "w-3 h-3 rounded-full",
+                                    getJobStatusIconStyles(
+                                      issue.jobApplication.status,
+                                    ),
+                                  )}
+                                />
+                                {toTitleCase(
+                                  String(issue.jobApplication.status),
+                                )}
+                              </span>
+                            ) : null}
                           </p>
                         </div>
                         <div className="flex min-w-0 items-center gap-1">
@@ -392,6 +456,19 @@ export default function FeedbackIssuePage() {
                                 label="Comment votes"
                               />
                               <div className="flex-1 min-w-0">
+                                <h5 className="text-xs font-bold mb-1 flex items-center gap-1">
+                                  {c.ownerEmail}{" "}
+                                  {c.isOwnerAdmin && (
+                                    <span className="text-[10px] border px-1 py-0.5 rounded-md text-purple-600 bg-purple-50 border-purple-200">
+                                      Admin
+                                    </span>
+                                  )}
+                                  {c.isUserOwner && (
+                                    <span className="text-[10px] border px-1 py-0.5 rounded-md text-green-600 bg-green-50 border-green-200">
+                                      You
+                                    </span>
+                                  )}
+                                </h5>
                                 <pre className="whitespace-pre-wrap font-sans text-sm leading-6">
                                   {c.commentText}
                                 </pre>
