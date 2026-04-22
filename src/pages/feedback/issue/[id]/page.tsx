@@ -565,9 +565,12 @@ function VoteRail({
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        className={cn("rounded-full", active && "text-purple-600")}
+        className={cn(
+          "rounded-full",
+          active && "text-purple-600 bg-purple-50 border-purple-200",
+        )}
       >
-        <ArrowBigUp className="h-6 w-6 text-red-500" />
+        <ArrowBigUp className="h-6 w-6" />
       </Button>
       <div className="text-sm font-semibold tabular-nums">{count}</div>
     </div>
