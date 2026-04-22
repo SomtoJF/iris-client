@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/toast";
@@ -66,6 +67,20 @@ function renderField(
             ))}
           </SelectContent>
         </Select>
+      );
+    case "radio":
+      return (
+        <RadioGroup value={value} onValueChange={onChange}>
+          {item.options?.map((opt) => {
+            const id = `${item.field_name}-${opt}`;
+            return (
+              <div key={opt} className="flex items-center gap-2">
+                <RadioGroupItem id={id} value={opt} />
+                <Label htmlFor={id}>{opt}</Label>
+              </div>
+            );
+          })}
+        </RadioGroup>
       );
     default:
       return (
@@ -150,10 +165,8 @@ export default function UserActionDialog({
             {userAction.layout.map((item) => (
               <div key={item.field_name} className="space-y-1.5">
                 <Label>{item.field_name}</Label>
-                {renderField(
-                  item,
-                  formValues[item.field_name] ?? "",
-                  (val) => updateField(item.field_name, val),
+                {renderField(item, formValues[item.field_name] ?? "", (val) =>
+                  updateField(item.field_name, val),
                 )}
               </div>
             ))}
