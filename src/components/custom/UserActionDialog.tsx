@@ -56,8 +56,11 @@ function renderField(
     case "select":
       return (
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger>
-            <SelectValue placeholder={`Select ${item.field_name}`} />
+          <SelectTrigger className="w-full">
+            <SelectValue
+              className="truncate"
+              placeholder={`Select ${item.field_name}`}
+            />
           </SelectTrigger>
           <SelectContent>
             {item.options?.map((opt) => (
@@ -145,11 +148,13 @@ export default function UserActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-xl w-fit">
         <DialogHeader>
           <DialogTitle>Action Required</DialogTitle>
           {userAction && (
-            <DialogDescription>{userAction.action_details}</DialogDescription>
+            <DialogDescription className="text-wrap">
+              <p>{userAction.action_details}</p>
+            </DialogDescription>
           )}
         </DialogHeader>
 
