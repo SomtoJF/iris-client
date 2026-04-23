@@ -166,7 +166,7 @@ export default function UserActionDialog({
             <Skeleton className="h-9 w-full" />
           </div>
         ) : userAction ? (
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 max-h-96 overflow-y-auto">
             {userAction.layout.map((item) => (
               <div key={item.field_name} className="space-y-1.5">
                 <Label>{item.field_name}</Label>
