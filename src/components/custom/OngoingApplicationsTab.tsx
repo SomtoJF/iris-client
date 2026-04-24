@@ -212,7 +212,7 @@ function buildColumns(
       header: "Date Applied",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {dayjs(row.original.updatedAt).fromNow()}
+          {dayjs(row.original.createdAt).fromNow()}
         </span>
       ),
       shimmer: () => <Skeleton className="h-4 w-20" />,
