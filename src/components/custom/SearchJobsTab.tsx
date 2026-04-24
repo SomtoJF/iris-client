@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { countries } from "country-data-list";
 import dayjs from "dayjs";
 import { History, Loader2, Search } from "lucide-react";
@@ -183,6 +183,7 @@ export default function SearchJobsTab() {
   const [dateCutoff, setDateCutoff] = useState<string>("any");
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [jobs, setJobs] = useState<DiscoveredJob[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [applyingUrl, setApplyingUrl] = useState<string | null>(null);
   const didHydrateFromUrlRef = useRef(false);
@@ -203,27 +204,34 @@ export default function SearchJobsTab() {
     queryFn: fetchJobSearchHistory,
   });
 
-  const searchMutation = useMutation<
-    Awaited<ReturnType<typeof searchJobs>>,
-    unknown,
-    Parameters<typeof searchJobs>[0]
-  >({
-    mutationFn: searchJobs,
-    onSuccess: (data) => {
-      setJobs(data.jobs);
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.jobSearch.history(),
-      });
-      toast.success(
-        data.jobs.length === 0
-          ? "No jobs matched"
-          : `Found ${data.jobs.length} job(s)`,
-      );
+  const runSearch = useCallback(
+    async (args: {
+      searchQuery: string;
+      location: string;
+      dateCutoff: string | null;
+    }) => {
+      setIsSearching(true);
+      try {
+        const data = await searchJobs(args);
+        setJobs(data.jobs);
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.jobSearch.history(),
+        });
+        toast.success(
+          data.jobs.length === 0
+            ? "No jobs matched"
+            : `Found ${data.jobs.length} job(s)`,
+        );
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Job search failed",
+        );
+      } finally {
+        setIsSearching(false);
+      }
     },
-    onError: (err: unknown) => {
-      toast.error(err instanceof Error ? err.message : "Job search failed");
-    },
-  });
+    [queryClient],
+  );
 
   const locationAlpha2 = selectedCountry?.alpha2 ?? "NG";
 
@@ -265,22 +273,22 @@ export default function SearchJobsTab() {
     setDateCutoff(nextDateCutoff);
     if (nextSelectedCountry) setSelectedCountry(nextSelectedCountry);
 
-    // Run initial search once if URL contains a query.
     if (nextQuery) {
-      // Ensure URL includes all search params when we execute a search (even if
-      // the initial URL only had a subset).
-      setSearchUrlParams({
+      const loc = nextSelectedCountry?.alpha2 ?? "NG";
+      const next = new URLSearchParams(searchParams);
+      next.set("q", nextQuery);
+      next.set("loc", loc.toUpperCase());
+      next.set("date", nextDateCutoff);
+      setSearchParams(next, { replace: true });
+
+      void runSearch({
         searchQuery: nextQuery,
-        locationAlpha2: nextSelectedCountry?.alpha2 ?? "NG",
-        dateCutoff: nextDateCutoff,
-      });
-      searchMutation.mutate({
-        searchQuery: nextQuery,
-        location: nextSelectedCountry?.alpha2 ?? "NG",
+        location: loc,
         dateCutoff: nextDateCutoff === "any" ? null : nextDateCutoff,
       });
     }
-  }, [searchMutation, searchParams, setSearchUrlParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -293,7 +301,7 @@ export default function SearchJobsTab() {
       locationAlpha2,
       dateCutoff,
     });
-    searchMutation.mutate({
+    void runSearch({
       searchQuery: q,
       location: locationAlpha2,
       dateCutoff: dateCutoff === "any" ? null : dateCutoff,
@@ -333,7 +341,7 @@ export default function SearchJobsTab() {
       locationAlpha2: locAlpha2,
       dateCutoff: normalizedDate,
     });
-    searchMutation.mutate({
+    void runSearch({
       searchQuery: entry.searchQuery,
       location: locAlpha2,
       dateCutoff: normalizedDate === "any" ? null : normalizedDate,
@@ -391,10 +399,10 @@ export default function SearchJobsTab() {
             <Button
               type="button"
               onClick={handleSearch}
-              disabled={searchMutation.isPending}
+              disabled={isSearching}
               className="h-8"
             >
-              {searchMutation.isPending ? (
+              {isSearching ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               ) : (
                 <Search className="h-4 w-4" aria-hidden />
@@ -443,7 +451,7 @@ export default function SearchJobsTab() {
         <div className="px-4 pb-2">
           {jobs.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              {searchMutation.isPending
+              {isSearching
                 ? "Searching…"
                 : "Run a search to see jobs here."}
             </p>

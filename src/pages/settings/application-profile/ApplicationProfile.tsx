@@ -103,6 +103,7 @@ const defaultFormValues: JobApplicationProfileFormValues = {
   noticePeriodDays: null,
   preferredWorkingArrangement: [],
   languageProficiencies: [],
+  linkedinUrl: "",
   portfolioLink: null,
 };
 
@@ -140,6 +141,7 @@ function isFormDirty(
     "ethnicity",
     "isOpenToRelocating",
     "noticePeriodDays",
+    "linkedinUrl",
     "portfolioLink",
   ];
   if (
@@ -192,6 +194,7 @@ export default function ApplicationProfile() {
           preferredWorkingArrangement:
             profile.preferredWorkingArrangement ?? [],
           languageProficiencies: profile.languageProficiencies ?? [],
+          linkedinUrl: profile.linkedinUrl ?? "",
           portfolioLink: profile.portfolioLink ?? null,
         });
       } catch {
@@ -900,6 +903,23 @@ function ProfileForm({
                     </Field>
                   );
                 }}
+              </form.Field>
+
+              <form.Field name="linkedinUrl">
+                {(field) => (
+                  <Field data-invalid={!!field.state.meta.errors?.length}>
+                    <FieldTitle>LinkedIn URL</FieldTitle>
+                    <Input
+                      value={field.state.value ?? ""}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                    <FieldError
+                      errors={toFieldErrors(field.state.meta.errors)}
+                    />
+                  </Field>
+                )}
               </form.Field>
 
               <form.Field name="portfolioLink">

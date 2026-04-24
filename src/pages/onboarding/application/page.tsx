@@ -105,6 +105,7 @@ const defaultFormValues: JobApplicationProfileFormValues = {
   noticePeriodDays: null,
   preferredWorkingArrangement: [],
   languageProficiencies: [],
+  linkedinUrl: "",
   portfolioLink: null,
 };
 
@@ -137,6 +138,7 @@ const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
     "noticePeriodDays",
     "preferredWorkingArrangement",
     "languageProficiencies",
+    "linkedinUrl",
     "portfolioLink",
   ],
 };
@@ -167,6 +169,7 @@ export default function ApplicationOnboardingPage() {
           preferredWorkingArrangement:
             profile.preferredWorkingArrangement ?? [],
           languageProficiencies: profile.languageProficiencies ?? [],
+          linkedinUrl: profile.linkedinUrl ?? "",
           portfolioLink: profile.portfolioLink ?? null,
         });
       } catch (err) {
@@ -234,6 +237,9 @@ function ApplicationOnboardingForm({
       }
       if ((value.languageProficiencies ?? []).length === 0) {
         requiredErrors.languageProficiencies = "Add at least one language";
+      }
+      if (!value.linkedinUrl?.trim()) {
+        requiredErrors.linkedinUrl = "LinkedIn URL is required";
       }
 
       if (Object.keys(requiredErrors).length > 0) {
@@ -1327,6 +1333,41 @@ function ApplicationOnboardingForm({
                         </Field>
                       );
                     }}
+                  </form.Field>
+
+                  <form.Field name="linkedinUrl">
+                    {(field) => (
+                      <Field
+                        data-field="linkedinUrl"
+                        data-invalid={
+                          !!(
+                            stepErrors.linkedinUrl ??
+                            field.state.meta.errors?.length
+                          )
+                        }
+                      >
+                        <FieldTitle>LinkedIn URL</FieldTitle>
+                        <Input
+                          value={field.state.value ?? ""}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          placeholder="https://linkedin.com/in/..."
+                          aria-invalid={
+                            !!(
+                              stepErrors.linkedinUrl ??
+                              field.state.meta.errors?.length
+                            )
+                          }
+                        />
+                        <FieldError
+                          errors={
+                            stepErrors.linkedinUrl
+                              ? [{ message: stepErrors.linkedinUrl }]
+                              : toFieldErrors(field.state.meta.errors)
+                          }
+                        />
+                      </Field>
+                    )}
                   </form.Field>
 
                   <form.Field name="portfolioLink">

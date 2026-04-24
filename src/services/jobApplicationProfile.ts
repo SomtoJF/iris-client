@@ -80,6 +80,13 @@ export const jobApplicationProfileSchema = z.object({
       }),
     )
     .default([]),
+  linkedinUrl: z
+    .string()
+    .min(1, "LinkedIn URL is required")
+    .refine(
+      (v) => v.startsWith("https://") && v.includes("linkedin.com/in"),
+      "Must be a valid LinkedIn profile URL (https://linkedin.com/in/...)",
+    ),
   portfolioLink: z.string().url("Invalid URL").nullable().optional(),
 });
 
@@ -113,6 +120,7 @@ export interface JobApplicationProfileResponse {
   noticePeriodDays: number | null;
   preferredWorkingArrangement: Array<"remote" | "hybrid" | "in_office">;
   languageProficiencies: LanguageProficiency[];
+  linkedinUrl: string;
   portfolioLink?: string | null;
 }
 
