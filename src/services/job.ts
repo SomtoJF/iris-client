@@ -67,6 +67,7 @@ export async function retryJobApplication(id: string): Promise<void> {
 
 export interface UserActionLayoutItem {
   field_name: string;
+  description: string | null;
   type: string | null;
   component: string | null;
   options: string[] | null;

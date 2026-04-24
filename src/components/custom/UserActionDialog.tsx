@@ -170,6 +170,9 @@ export default function UserActionDialog({
             {userAction.layout.map((item) => (
               <div key={item.field_name} className="space-y-1.5">
                 <Label>{item.field_name}</Label>
+                {item.description && (
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                )}
                 {renderField(item, formValues[item.field_name] ?? "", (val) =>
                   updateField(item.field_name, val),
                 )}
