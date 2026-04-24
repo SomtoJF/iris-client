@@ -128,7 +128,9 @@ function JobResultRow({
             onApply(job.url);
           }}
         >
-          {job.applied ? "Applied" : pending ? (
+          {job.applied ? (
+            "Applied"
+          ) : pending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           ) : (
             "Apply now"
@@ -224,9 +226,7 @@ export default function SearchJobsTab() {
             : `Found ${data.jobs.length} job(s)`,
         );
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Job search failed",
-        );
+        toast.error(err instanceof Error ? err.message : "Job search failed");
       } finally {
         setIsSearching(false);
       }
@@ -314,6 +314,9 @@ export default function SearchJobsTab() {
     try {
       await applyToJob({ jobUrl: url });
       toast.success("Application started");
+      setJobs((prev) =>
+        prev.map((j) => (j.url === url ? { ...j, applied: true } : j)),
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to apply");
     } finally {
@@ -452,9 +455,7 @@ export default function SearchJobsTab() {
         <div className="px-4 pb-2">
           {jobs.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              {isSearching
-                ? "Searching…"
-                : "Run a search to see jobs here."}
+              {isSearching ? "Searching…" : "Run a search to see jobs here."}
             </p>
           ) : (
             jobs.map((job) => (
