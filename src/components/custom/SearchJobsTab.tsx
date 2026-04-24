@@ -92,6 +92,7 @@ function JobResultRow({
   onApply: (url: string) => void;
 }) {
   const pending = applyingUrl === job.url;
+  const disabled = job.applied || pending;
   const openJobInNewTab = () => {
     window.open(job.url, "_blank", "noopener,noreferrer");
   };
@@ -121,13 +122,13 @@ function JobResultRow({
         <Button
           type="button"
           size="sm"
-          disabled={pending}
+          disabled={disabled}
           onClick={(e) => {
             e.stopPropagation();
             onApply(job.url);
           }}
         >
-          {pending ? (
+          {job.applied ? "Applied" : pending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           ) : (
             "Apply now"

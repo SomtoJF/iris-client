@@ -5,6 +5,7 @@ export interface DiscoveredJob {
   url: string;
   companyName: string;
   datePosted: string;
+  applied: boolean;
 }
 
 export interface JobSearchResponse {
