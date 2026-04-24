@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,33 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
+/** Returns a user-facing message when the URL must not be used, or null if allowed. */
+function blockedCustomJobUrlMessage(urlString: string): string | null {
+  const trimmed = urlString.trim();
+  if (!trimmed) return null;
+  let host: string;
+  try {
+    host = new URL(trimmed).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+  if (host === "linkedin.com" || host.endsWith(".linkedin.com")) {
+    return "LinkedIn job URLs are not supported. Try looking up the job on another site.";
+  }
+  if (host === "indeed.com" || host.endsWith(".indeed.com")) {
+    return "Indeed job URLs are not supported. Try looking up the job on another site.";
+  }
+  if (
+    host === "seek.com.au" ||
+    host.endsWith(".seek.com.au") ||
+    host === "seek.au" ||
+    host.endsWith(".seek.au")
+  ) {
+    return "SEEK Australia job URLs are not supported. Try looking up the job on another site.";
+  }
+  return null;
+}
+
 interface CustomJobDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,8 +54,13 @@ export default function CustomJobDialog({
   isLoading,
 }: CustomJobDialogProps) {
   const [jobUrl, setJobUrl] = useState("");
+  const blockedMessage = useMemo(
+    () => blockedCustomJobUrlMessage(jobUrl),
+    [jobUrl],
+  );
 
-  function handleSubmit(_e: React.FormEvent) {
+  function handleSubmit() {
+    if (blockedMessage) return;
     onSubmit({ jobUrl });
     setJobUrl("");
     onOpenChange(false);
@@ -66,6 +98,11 @@ export default function CustomJobDialog({
                   Make sure the job URL leads to the job description page.
                 </span>
               </FieldDescription>
+              {blockedMessage ? (
+                <p className="text-xs text-destructive" role="alert">
+                  {blockedMessage}
+                </p>
+              ) : null}
             </Field>
           </FieldGroup>
 
@@ -78,7 +115,7 @@ export default function CustomJobDialog({
             <Button
               type="submit"
               className="hover:opacity-80 cursor-pointer"
-              disabled={!jobUrl || isLoading}
+              disabled={!jobUrl.trim() || isLoading || Boolean(blockedMessage)}
               onClick={handleSubmit}
             >
               {isLoading ? (
