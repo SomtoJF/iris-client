@@ -20,6 +20,7 @@ import FeedbackLayout from "./layout/FeedbackLayout";
 import NewFeedbackPage from "./pages/feedback/new/page";
 import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 import { TooltipProvider } from "./components/ui/tooltip";
+import DashboardLayout from "./layout/DashboardLayout";
 
 function App() {
   const queryClient = new QueryClient();
@@ -47,22 +48,27 @@ function App() {
               />
 
               <Route element={<ProtectedLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-              </Route>
+                {/* Dashboard */}
+                <Route element={<DashboardLayout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                </Route>
 
-              <Route element={<FeedbackLayout />}>
-                <Route path="/feedback" element={<FeedbackPage />} />
-                <Route path="/feedback/new" element={<NewFeedbackPage />} />
-                <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
-              </Route>
+                {/* Feedback */}
+                <Route element={<FeedbackLayout />}>
+                  <Route path="/feedback" element={<FeedbackPage />} />
+                  <Route path="/feedback/new" element={<NewFeedbackPage />} />
+                  <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
+                </Route>
 
-              <Route path="/settings" element={<SettingsLayout />}>
-                <Route
-                  path="application-profile"
-                  element={<ApplicationProfile />}
-                />
-                <Route path="account" element={<Account />} />
-                <Route path="admin" element={<AdminPage />} />
+                {/* Settings */}
+                <Route path="/settings" element={<SettingsLayout />}>
+                  <Route
+                    path="application-profile"
+                    element={<ApplicationProfile />}
+                  />
+                  <Route path="account" element={<Account />} />
+                  <Route path="admin" element={<AdminPage />} />
+                </Route>
               </Route>
             </Routes>
           </TooltipProvider>
