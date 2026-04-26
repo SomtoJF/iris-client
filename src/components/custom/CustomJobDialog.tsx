@@ -38,6 +38,17 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
   ) {
     return "SEEK Australia job URLs are not supported. Try looking up the job on another site.";
   }
+  if (
+    host === "jobberman.com" ||
+    host.endsWith(".jobberman.com") ||
+    host === "jobberman.com.ng" ||
+    host.endsWith(".jobberman.com.ng")
+  ) {
+    return "Jobberman job URLs are not supported. Try looking up the job on another site.";
+  }
+  if (host === "wellfound.com" || host.endsWith(".wellfound.com")) {
+    return "Wellfound job URLs are not supported. Try looking up the job on another site.";
+  }
   return null;
 }
 
@@ -96,6 +107,7 @@ export default function CustomJobDialog({
                 />
                 <span>
                   Make sure the job URL leads to the job description page.
+                  Greenhouse is currently the most reliable source.
                 </span>
               </FieldDescription>
               {blockedMessage ? (
