@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { countries } from "country-data-list";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { History, Loader2, Search } from "lucide-react";
 import { useSearchParams } from "react-router";
 
@@ -33,6 +34,8 @@ import {
   type JobSearchHistoryEntry,
 } from "@/services/jobSearch";
 import { cn } from "@/lib/utils";
+
+dayjs.extend(relativeTime);
 
 const DATE_RANGE_OPTIONS = [
   { value: "any", label: "Any time" },
@@ -96,6 +99,14 @@ function JobResultRow({
   const openJobInNewTab = () => {
     window.open(job.url, "_blank", "noopener,noreferrer");
   };
+
+  const datePostedLabel = useMemo(() => {
+    if (!job.datePosted) return null;
+    const d = dayjs(job.datePosted);
+    if (!d.isValid()) return job.datePosted;
+    return d.fromNow();
+  }, [job.datePosted]);
+
   return (
     <div
       onClick={openJobInNewTab}
@@ -108,9 +119,9 @@ function JobResultRow({
           <span className="truncate font-semibold text-foreground transition-colors group-hover:text-purple-600">
             {job.title}
           </span>
-          {job.datePosted ? (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {job.datePosted}
+          {datePostedLabel ? (
+            <span className="shrink-0 text-sm text-muted-foreground">
+              {datePostedLabel}
             </span>
           ) : null}
         </div>
