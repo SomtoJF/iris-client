@@ -201,6 +201,7 @@ export default function SearchJobsTab() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [applyingUrl, setApplyingUrl] = useState<string | null>(null);
   const didHydrateFromUrlRef = useRef(false);
+  const didAutoSearchFromHistoryRef = useRef(false);
 
   const nigeriaCountry = useMemo(() => {
     const c = countries.all.find((x) => x.alpha3 === "NGA");
@@ -262,6 +263,39 @@ export default function SearchJobsTab() {
     [searchParams, setSearchParams],
   );
 
+  const applyHistoryEntry = useCallback(
+    (entry: JobSearchHistoryEntry, opts?: { closePopover?: boolean }) => {
+      setSearchQuery(entry.searchQuery);
+      setDateCutoff(normalizeDateCutoff(entry.dateCutoff));
+      const match = countries.all.find(
+        (c) => c.alpha2?.toUpperCase() === entry.location.toUpperCase(),
+      ) as Country | undefined;
+      if (match) {
+        setSelectedCountry(match);
+      } else {
+        setSelectedCountry(null);
+        toast.info(
+          "Location was not recognized; pick a country from the list.",
+        );
+      }
+      if (opts?.closePopover) setHistoryOpen(false);
+
+      const normalizedDate = normalizeDateCutoff(entry.dateCutoff);
+      const locAlpha2 = match?.alpha2 ?? entry.location ?? "NG";
+      setSearchUrlParams({
+        searchQuery: entry.searchQuery,
+        locationAlpha2: locAlpha2,
+        dateCutoff: normalizedDate,
+      });
+      void runSearch({
+        searchQuery: entry.searchQuery,
+        location: locAlpha2,
+        dateCutoff: normalizedDate === "any" ? null : normalizedDate,
+      });
+    },
+    [runSearch, setSearchUrlParams],
+  );
+
   useEffect(() => {
     if (didHydrateFromUrlRef.current) return;
     didHydrateFromUrlRef.current = true;
@@ -302,6 +336,18 @@ export default function SearchJobsTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (didAutoSearchFromHistoryRef.current) return;
+    // If URL hydration already ran a query this mount, history must not override.
+    if (!didHydrateFromUrlRef.current) return;
+    const qParam = searchParams.get("q")?.trim() ?? "";
+    if (qParam) return;
+    if (historyEntries.length === 0) return;
+
+    didAutoSearchFromHistoryRef.current = true;
+    applyHistoryEntry(historyEntries[0]);
+  }, [applyHistoryEntry, historyEntries, searchParams]);
+
   const handleSearch = () => {
     const q = searchQuery.trim();
     if (!q) {
@@ -336,31 +382,7 @@ export default function SearchJobsTab() {
   };
 
   const handleUseSearch = (entry: JobSearchHistoryEntry) => {
-    setSearchQuery(entry.searchQuery);
-    setDateCutoff(normalizeDateCutoff(entry.dateCutoff));
-    const match = countries.all.find(
-      (c) => c.alpha2?.toUpperCase() === entry.location.toUpperCase(),
-    ) as Country | undefined;
-    if (match) {
-      setSelectedCountry(match);
-    } else {
-      setSelectedCountry(null);
-      toast.info("Location was not recognized; pick a country from the list.");
-    }
-    setHistoryOpen(false);
-
-    const normalizedDate = normalizeDateCutoff(entry.dateCutoff);
-    const locAlpha2 = match?.alpha2 ?? entry.location ?? "NG";
-    setSearchUrlParams({
-      searchQuery: entry.searchQuery,
-      locationAlpha2: locAlpha2,
-      dateCutoff: normalizedDate,
-    });
-    void runSearch({
-      searchQuery: entry.searchQuery,
-      location: locAlpha2,
-      dateCutoff: normalizedDate === "any" ? null : normalizedDate,
-    });
+    applyHistoryEntry(entry, { closePopover: true });
   };
 
   return (

@@ -1,4 +1,4 @@
-import type { IssueType } from "@/services/issue";
+import type { IssueFilter, IssueSort, IssueType } from "@/services/issue";
 
 const issueKeys = {
   all: () => ["issues"] as const,
@@ -9,6 +9,8 @@ const issueKeys = {
     search?: string;
     type?: IssueType;
     resolved?: boolean | null;
+    sort?: IssueSort;
+    filter?: IssueFilter;
   }) => [...issueKeys.lists(), params] as const,
   details: () => [...issueKeys.all(), "detail"] as const,
   detail: (id: string) => [...issueKeys.details(), id] as const,

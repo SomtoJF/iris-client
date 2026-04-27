@@ -15,8 +15,10 @@ export interface IssueListItem {
   title: string;
   type: IssueType;
   summary: string;
+  contentText: string;
   isResolved: boolean;
   upvoteCount: number;
+  userUpvoted: boolean;
   commentCount: number;
   createdAt: string;
   updatedAt: string;
@@ -70,6 +72,9 @@ export interface PaginatedIssueCommentsResponse {
   data: IssueComment[];
 }
 
+export type IssueSort = "upvotes_desc" | "upvotes_asc";
+export type IssueFilter = "" | "hot" | "mine";
+
 export async function fetchIssues(params: {
   page: number;
   limit: number;
@@ -77,6 +82,8 @@ export async function fetchIssues(params: {
   type?: IssueType;
   /** Omit or pass `null` to include both open and resolved issues. */
   resolved?: boolean | null;
+  sort?: IssueSort;
+  filter?: IssueFilter;
 }): Promise<FetchIssuesResponse> {
   const sp = new URLSearchParams({
     page: String(params.page),
@@ -86,6 +93,8 @@ export async function fetchIssues(params: {
   if (params.type) sp.set("type", params.type);
   if (params.resolved === true || params.resolved === false)
     sp.set("resolved", String(params.resolved));
+  if (params.sort) sp.set("sort", params.sort);
+  if (params.filter) sp.set("filter", params.filter);
 
   const response = await fetch(`${BaseRoute}/issues?${sp}`, {
     method: "GET",
