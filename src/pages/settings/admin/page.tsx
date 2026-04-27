@@ -110,7 +110,10 @@ function buildColumns(
       accessorKey: "model",
       header: "Model",
       cell: ({ row }) => (
-        <span className="truncate text-black text-sm">
+        <span
+          className="truncate text-black text-sm"
+          title={row.original.model}
+        >
           {row.original.model || "—"}
         </span>
       ),
