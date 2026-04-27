@@ -9,10 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
   ExternalLink,
+  Eye,
   Loader2,
   RotateCcw,
   Search,
   ShieldAlert,
+  XCircle,
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -27,6 +29,7 @@ import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import UserActionDialog from "./UserActionDialog";
+import ApplicationDataDialog from "./ApplicationDataDialog";
 import {
   Tooltip,
   TooltipContent,
@@ -78,6 +81,8 @@ function buildColumns(
   onToggle: (id: string) => void,
   onRetry: (id: string) => void,
   onTakeAction: (id: string) => void,
+  onViewApplicationData: (id: string) => void,
+  onCancelApplication: (id: string) => void,
 ): (ColumnDef<JobApplication, any> & {
   shimmer?: () => React.ReactNode;
   width?: string;
@@ -178,6 +183,29 @@ function buildColumns(
                 </p>
               </div>
             )}
+            {row.original.status === "applied" &&
+              row.original.hasApplicationData && (
+                <button
+                  className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
+                  disabled={isRetrying}
+                  onClick={() => onViewApplicationData(row.original.id)}
+                >
+                  <Eye className="w-3 h-3 mr-1" />
+                  <span>View Data</span>
+                </button>
+              )}
+
+            {row.original.status === "processing" && (
+              <button
+                className="ml-2 text-xs items-center flex no-wrap text-red-500 hover:text-red-600 cursor-pointer disabled:opacity-50"
+                disabled={isRetrying}
+                onClick={() => onCancelApplication(row.original.id)}
+              >
+                <XCircle className="w-3 h-3 mr-1" />
+                <span>Cancel</span>
+              </button>
+            )}
+
             {row.original.status === "failed" && (
               <button
                 className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
@@ -230,6 +258,7 @@ export default function OngoingApplicationsTab() {
   const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(
     null,
   );
+  const [viewDataJobId, setViewDataJobId] = useState<string | null>(null);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
@@ -351,6 +380,14 @@ export default function OngoingApplicationsTab() {
     setActionDialogJobId(id);
   }
 
+  function handleViewApplicationData(id: string) {
+    setViewDataJobId(id);
+  }
+
+  function handleCancelApplication(id: string) {
+    console.log(id);
+  }
+
   function handleSearch() {
     setActiveSearch(searchInput);
     setPageIndex(0);
@@ -377,6 +414,8 @@ export default function OngoingApplicationsTab() {
     toggleSelect,
     handleRetry,
     handleTakeAction,
+    handleViewApplicationData,
+    handleCancelApplication,
   );
 
   const tableConfig: TableConfig<JobApplication> = {
@@ -439,6 +478,13 @@ export default function OngoingApplicationsTab() {
           if (!o) setActionDialogJobId(null);
         }}
         jobApplicationId={actionDialogJobId}
+      />
+      <ApplicationDataDialog
+        open={!!viewDataJobId}
+        onOpenChange={(o) => {
+          if (!o) setViewDataJobId(null);
+        }}
+        jobApplicationId={viewDataJobId}
       />
     </div>
   );

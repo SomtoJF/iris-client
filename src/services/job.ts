@@ -18,6 +18,7 @@ export interface JobApplication {
   jobTitle: string;
   companyName: string;
   status: "processing" | "applied" | "failed" | "blocked";
+  hasApplicationData: boolean;
   failureReason?: string;
   createdAt: string;
   updatedAt: string;
@@ -97,6 +98,36 @@ export async function fetchUserAction(jobApplicationId: string): Promise<UserAct
     throw new Error(res.error ?? "Failed to fetch user action");
   }
   return res;
+}
+
+export interface JobApplicationQuestion {
+  question: string;
+  answer: string;
+  is_optional: boolean;
+}
+
+export interface JobApplicationDataResume {
+  id: string;
+  fileName: string;
+  fileSize: number;
+}
+
+export interface JobApplicationDataResponse {
+  questions: JobApplicationQuestion[];
+  cover_letter: string | null;
+  resume: JobApplicationDataResume;
+}
+
+export async function fetchJobApplicationData(id: string): Promise<JobApplicationDataResponse> {
+  const response = await fetch(`${BaseRoute}/jobs/${id}/application-data`, {
+    method: "GET",
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status !== 200) {
+    throw new Error(res.error ?? "Failed to fetch application data");
+  }
+  return res.data;
 }
 
 export async function sendWorkflowSignal(workflowId: string, signalName: string, payload: unknown): Promise<void> {
