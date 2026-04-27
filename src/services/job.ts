@@ -17,7 +17,7 @@ export interface JobApplication {
   url: string;
   jobTitle: string;
   companyName: string;
-  status: "processing" | "applied" | "failed" | "blocked";
+  status: "processing" | "applied" | "failed" | "blocked" | "cancelled";
   hasApplicationData: boolean;
   failureReason?: string;
   createdAt: string;
@@ -128,6 +128,19 @@ export async function fetchJobApplicationData(id: string): Promise<JobApplicatio
     throw new Error(res.error ?? "Failed to fetch application data");
   }
   return res.data;
+}
+
+export async function cancelJobApplication(id: string, reason?: string): Promise<void> {
+  const response = await fetch(`${BaseRoute}/jobs/${id}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ reason: reason || null }),
+  });
+  const res = await response.json();
+  if (response.status > 299) {
+    throw new Error(res.error ?? "Failed to cancel job application");
+  }
 }
 
 export async function sendWorkflowSignal(workflowId: string, signalName: string, payload: unknown): Promise<void> {

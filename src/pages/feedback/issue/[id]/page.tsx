@@ -321,15 +321,17 @@ export default function FeedbackIssuePage() {
                   />
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm mb-3 rounded-md p-2 bg-gray-50 ">
-                      <h3 className="text-sm font-medium mb-1 flex items-center gap-1">
-                        <Sparkles className="h-4 w-4 text-purple-500" />
-                        Summary
-                      </h3>
-                      <div className="text-sm text-muted-foreground">
-                        {issue.summary}
+                    {issue.summary && (
+                      <div className="text-sm mb-3 rounded-md p-2 bg-gray-50 ">
+                        <h3 className="text-sm font-medium mb-1 flex items-center gap-1">
+                          <Sparkles className="h-4 w-4 text-purple-500" />
+                          Summary
+                        </h3>
+                        <div className="text-sm text-muted-foreground">
+                          {issue.summary}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {issue.jobApplication ? (
                       <div className="rounded-md border border-border bg-muted/30 p-3 mb-3 space-y-2">

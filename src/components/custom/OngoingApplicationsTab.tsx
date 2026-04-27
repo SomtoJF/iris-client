@@ -1,6 +1,7 @@
 import {
   fetchAllJobApplications,
   retryJobApplication,
+  cancelJobApplication,
   type JobApplication,
   type FetchAllJobApplicationsResponse,
 } from "@/services/job";
@@ -30,6 +31,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import UserActionDialog from "./UserActionDialog";
 import ApplicationDataDialog from "./ApplicationDataDialog";
+import CancelApplicationDialog from "./CancelApplicationDialog";
 import {
   Tooltip,
   TooltipContent,
@@ -66,6 +68,11 @@ function getStatusTagConfig(status: JobStatus): {
       return {
         textStyles: "text-pink-500",
         iconStyles: "bg-pink-500 opacity-50",
+      };
+    case "cancelled":
+      return {
+        textStyles: "text-slate-400",
+        iconStyles: "bg-slate-400 opacity-50",
       };
     default:
       return {
@@ -259,6 +266,8 @@ export default function OngoingApplicationsTab() {
     null,
   );
   const [viewDataJobId, setViewDataJobId] = useState<string | null>(null);
+  const [cancelDialogJobId, setCancelDialogJobId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
@@ -344,10 +353,34 @@ export default function OngoingApplicationsTab() {
       },
     );
 
+    const applicationCancelledHandler = addEventListener(
+      "APPLICATION_CANCELLED",
+      (data) => {
+        toast.info(
+          `Application for ${data.jobTitle} at ${data.companyName} was cancelled`,
+        );
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id
+                  ? { ...j, status: "cancelled" as const }
+                  : j,
+              ),
+            };
+          },
+        );
+      },
+    );
+
     return () => {
       applicationSuccessHandler();
       applicationFailedHandler();
       userActionRequiredHandler();
+      applicationCancelledHandler();
     };
   }, [addEventListener, queryClient]);
 
@@ -385,7 +418,24 @@ export default function OngoingApplicationsTab() {
   }
 
   function handleCancelApplication(id: string) {
-    console.log(id);
+    setCancelDialogJobId(id);
+  }
+
+  async function handleConfirmCancel(reason: string) {
+    if (!cancelDialogJobId) return;
+    setIsCancelling(true);
+    try {
+      await cancelJobApplication(cancelDialogJobId, reason || undefined);
+      toast.success("Application cancellation initiated");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
+    } catch {
+      toast.error("Failed to cancel application");
+    } finally {
+      setIsCancelling(false);
+      setCancelDialogJobId(null);
+    }
   }
 
   function handleSearch() {
@@ -485,6 +535,14 @@ export default function OngoingApplicationsTab() {
           if (!o) setViewDataJobId(null);
         }}
         jobApplicationId={viewDataJobId}
+      />
+      <CancelApplicationDialog
+        open={!!cancelDialogJobId}
+        onOpenChange={(o) => {
+          if (!o) setCancelDialogJobId(null);
+        }}
+        onConfirm={handleConfirmCancel}
+        isLoading={isCancelling}
       />
     </div>
   );
