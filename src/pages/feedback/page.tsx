@@ -126,8 +126,8 @@ export default function FeedbackPage() {
   })();
 
   return (
-    <div className="w-full px-8 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="w-full px-8 py-8 min-h-screen flex flex-col">
+      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold tracking-tight">All Issues</h1>
@@ -137,40 +137,64 @@ export default function FeedbackPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-3 mb-6">
-          <Input
-            placeholder="Search issues..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-xs"
-          />
+        <div className="flex items-end gap-3 mb-6">
+          <div className="flex-1 space-y-1">
+            <label
+              className="text-xs leading-tight tracking-wider font-bold text-muted-foreground uppercase"
+              htmlFor="search-issues"
+            >
+              Search
+            </label>
+            <Input
+              id="search-issues"
+              placeholder="Search issues..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-          <Select
-            value={sort}
-            onValueChange={(v) => setSort(v as IssueSort)}
-            disabled={filter === "hot"}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="upvotes_desc">Most upvoted</SelectItem>
-              <SelectItem value="upvotes_asc">Least upvoted</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <label
+              className="text-xs leading-tight tracking-wider font-bold text-muted-foreground uppercase"
+              htmlFor="sort-issues"
+            >
+              Sort by
+            </label>
+            <Select
+              value={sort}
+              onValueChange={(v) => setSort(v as IssueSort)}
+              disabled={filter === "hot"}
+            >
+              <SelectTrigger className="w-[150px]" id="sort-issues">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="upvotes_desc">Most upvoted</SelectItem>
+                <SelectItem value="upvotes_asc">Least upvoted</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={filterValue} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unresolved">Unresolved</SelectItem>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="hot">Hot</SelectItem>
-              <SelectItem value="mine">Posted by Me</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <label
+              className="text-xs leading-tight tracking-wider font-bold text-muted-foreground uppercase"
+              htmlFor="filter-issues"
+            >
+              Filter
+            </label>
+            <Select value={filterValue} onValueChange={handleFilterChange}>
+              <SelectTrigger className="w-[150px]" id="filter-issues">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unresolved">Unresolved</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="hot">Hot</SelectItem>
+                <SelectItem value="mine">Posted by Me</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Issues list */}
@@ -193,9 +217,7 @@ export default function FeedbackPage() {
                 key={issue.id}
                 issue={issue}
                 onVote={() => voteMutation.mutate(issue)}
-                voteDisabled={
-                  issue.isResolved || voteMutation.isPending
-                }
+                voteDisabled={issue.isResolved || voteMutation.isPending}
               />
             ))}
           </div>
@@ -203,7 +225,7 @@ export default function FeedbackPage() {
 
         {/* Pagination */}
         {total > 0 && (
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-auto pt-6">
             <Button
               variant="outline"
               size="sm"
@@ -267,14 +289,9 @@ function IssueCard({
       </div>
 
       {/* Content */}
-      <Link
-        to={`/feedback/${issue.id}`}
-        className="flex-1 min-w-0 block"
-      >
+      <Link to={`/feedback/${issue.id}`} className="flex-1 min-w-0 block">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-sm truncate">
-            {issue.title}
-          </span>
+          <span className="font-semibold text-sm truncate">{issue.title}</span>
           <Badge
             variant="secondary"
             className={cn(
@@ -297,9 +314,7 @@ function IssueCard({
         </div>
 
         {issue.summary && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {issue.summary}
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{issue.summary}</p>
         )}
 
         <p className="text-sm text-gray-700 mt-1 line-clamp-3">
