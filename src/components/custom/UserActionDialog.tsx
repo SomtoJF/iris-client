@@ -148,7 +148,7 @@ export default function UserActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl w-fit">
+      <DialogContent className="w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle>Action Required</DialogTitle>
           {userAction && (
@@ -171,7 +171,9 @@ export default function UserActionDialog({
               <div key={item.field_name} className="space-y-1.5">
                 <Label>{item.field_name}</Label>
                 {item.description && (
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
                 )}
                 {renderField(item, formValues[item.field_name] ?? "", (val) =>
                   updateField(item.field_name, val),
