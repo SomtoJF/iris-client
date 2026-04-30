@@ -2,6 +2,7 @@ import {
   fetchAllJobApplications,
   retryJobApplication,
   cancelJobApplication,
+  deleteJobApplication,
   type JobApplication,
   type FetchAllJobApplicationsResponse,
 } from "@/services/job";
@@ -15,6 +16,7 @@ import {
   RotateCcw,
   Search,
   ShieldAlert,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import dayjs from "dayjs";
@@ -37,12 +39,26 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 dayjs.extend(relativeTime);
 
 const LIMIT = 10;
 
 type JobStatus = JobApplication["status"];
+
+function isSelectableStatus(status: JobStatus): boolean {
+  return status === "failed" || status === "cancelled";
+}
 
 function getStatusTagConfig(status: JobStatus): {
   textStyles: string;
@@ -90,7 +106,7 @@ function buildColumns(
   onTakeAction: (id: string) => void,
   onViewApplicationData: (id: string) => void,
   onCancelApplication: (id: string) => void,
-): (ColumnDef<JobApplication, any> & {
+): (ColumnDef<JobApplication, unknown> & {
   shimmer?: () => React.ReactNode;
   width?: string;
 })[] {
@@ -99,11 +115,11 @@ function buildColumns(
       id: "select",
       header: () => null,
       cell: ({ row }) => {
-        const isFailed = row.original.status === "failed";
+        const isSelectable = isSelectableStatus(row.original.status);
         return (
           <Checkbox
             checked={selectedIds.has(row.original.id)}
-            disabled={!isFailed}
+            disabled={!isSelectable}
             onCheckedChange={() => onToggle(row.original.id)}
             aria-label="Select row"
           />
@@ -233,19 +249,18 @@ function buildColumns(
               </button>
             )}
 
-            {row.original.status === "failed" ||
-              (row.original.status === "cancelled" && (
-                <button
-                  className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
-                  disabled={isRetrying}
-                  onClick={() => onRetry(row.original.id)}
-                >
-                  <RotateCcw
-                    className={cn("w-3 h-3 mr-1", isRetrying && "animate-spin")}
-                  />
-                  <span>{isRetrying ? "Retrying..." : "Retry"}</span>
-                </button>
-              ))}
+            {isSelectableStatus(row.original.status) && (
+              <button
+                className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
+                disabled={isRetrying}
+                onClick={() => onRetry(row.original.id)}
+              >
+                <RotateCcw
+                  className={cn("w-3 h-3 mr-1", isRetrying && "animate-spin")}
+                />
+                <span>{isRetrying ? "Retrying..." : "Retry"}</span>
+              </button>
+            )}
 
             {row.original.status === "blocked" && (
               <button
@@ -291,6 +306,8 @@ export default function OngoingApplicationsTab() {
     null,
   );
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
@@ -405,29 +422,99 @@ export default function OngoingApplicationsTab() {
     };
   }, [addEventListener, queryClient]);
 
-  async function handleRetry(id: string) {
-    setRetryingIds((prev) => new Set(prev).add(id));
+  function removeSelectedIds(ids: string[]) {
+    const idSet = new Set(ids);
     setSelectedIds((prev) => {
       const s = new Set(prev);
-      s.delete(id);
+      idSet.forEach((id) => s.delete(id));
       return s;
     });
-    try {
-      await retryJobApplication(id);
+  }
+
+  function markApplicationsAsProcessing(ids: string[]) {
+    const idSet = new Set(ids);
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.jobApplication.lists() },
+      (oldData: FetchAllJobApplicationsResponse | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((job) =>
+            idSet.has(job.id)
+              ? {
+                  ...job,
+                  status: "processing" as const,
+                  failureReason: undefined,
+                  cancellationReason: undefined,
+                }
+              : job,
+          ),
+        };
+      },
+    );
+  }
+
+  function removeApplicationsFromCache(ids: string[]) {
+    const idSet = new Set(ids);
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.jobApplication.lists() },
+      (oldData: FetchAllJobApplicationsResponse | undefined) => {
+        if (!oldData) return oldData;
+
+        const data = oldData.data.filter((job) => !idSet.has(job.id));
+        const removedCount = oldData.data.length - data.length;
+        return {
+          ...oldData,
+          data,
+          total: Math.max(0, oldData.total - removedCount),
+        };
+      },
+    );
+  }
+
+  async function retryApplications(ids: string[]) {
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length === 0) return;
+
+    setRetryingIds((prev) => {
+      const s = new Set(prev);
+      uniqueIds.forEach((id) => s.add(id));
+      return s;
+    });
+
+    const results = await Promise.allSettled(
+      uniqueIds.map((id) => retryJobApplication(id)),
+    );
+    const succeededIds = uniqueIds.filter(
+      (_, index) => results[index].status === "fulfilled",
+    );
+    const failedCount = uniqueIds.length - succeededIds.length;
+
+    if (succeededIds.length > 0) {
+      markApplicationsAsProcessing(succeededIds);
+      removeSelectedIds(succeededIds);
+    }
+
+    if (failedCount > 0) {
+      toast.error(
+        failedCount === 1
+          ? "Failed to retry 1 application"
+          : `Failed to retry ${failedCount} applications`,
+      );
       queryClient.invalidateQueries({
         queryKey: queryKeys.jobApplication.lists(),
-      });
-    } catch {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.jobApplication.lists(),
-      });
-    } finally {
-      setRetryingIds((prev) => {
-        const s = new Set(prev);
-        s.delete(id);
-        return s;
       });
     }
+
+    setRetryingIds((prev) => {
+      const s = new Set(prev);
+      uniqueIds.forEach((id) => s.delete(id));
+      return s;
+    });
+  }
+
+  async function handleRetry(id: string) {
+    await retryApplications([id]);
   }
 
   function handleTakeAction(id: string) {
@@ -465,9 +552,45 @@ export default function OngoingApplicationsTab() {
   }
 
   async function handleRetryAll() {
+    await retryApplications([...selectedIds]);
+  }
+
+  async function handleConfirmDeleteSelected() {
     const ids = [...selectedIds];
-    setSelectedIds(new Set());
-    await Promise.all(ids.map((id) => handleRetry(id)));
+    if (ids.length === 0) return;
+
+    setIsDeleting(true);
+    const results = await Promise.allSettled(
+      ids.map((id) => deleteJobApplication(id)),
+    );
+    const succeededIds = ids.filter(
+      (_, index) => results[index].status === "fulfilled",
+    );
+    const failedCount = ids.length - succeededIds.length;
+
+    if (succeededIds.length > 0) {
+      removeApplicationsFromCache(succeededIds);
+      removeSelectedIds(succeededIds);
+      toast.success(
+        succeededIds.length === 1
+          ? "Application deleted"
+          : `${succeededIds.length} applications deleted`,
+      );
+    }
+
+    if (failedCount > 0) {
+      toast.error(
+        failedCount === 1
+          ? "Failed to delete 1 application"
+          : `Failed to delete ${failedCount} applications`,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
+    }
+
+    setIsDeleting(false);
+    setIsDeleteDialogOpen(false);
   }
 
   function toggleSelect(id: string) {
@@ -505,10 +628,30 @@ export default function OngoingApplicationsTab() {
     <div className="w-full pb-8 space-y-3">
       <div className="w-full mt-2">
         {selectedIds.size > 0 ? (
-          <Button onClick={handleRetryAll} size="sm">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Retry All ({selectedIds.size})
-          </Button>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {selectedIds.size} selected
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleRetryAll}
+                size="sm"
+                disabled={retryingIds.size > 0 || isDeleting}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retry All ({selectedIds.size})
+              </Button>
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                size="sm"
+                variant="destructive"
+                disabled={isDeleting || retryingIds.size > 0}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="w-full flex items-center gap-4">
             <Input
@@ -565,7 +708,66 @@ export default function OngoingApplicationsTab() {
         onConfirm={handleConfirmCancel}
         isLoading={isCancelling}
       />
+      <DeleteApplicationsDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        selectedCount={selectedIds.size}
+        onConfirm={handleConfirmDeleteSelected}
+        isLoading={isDeleting}
+      />
     </div>
+  );
+}
+
+interface DeleteApplicationsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCount: number;
+  onConfirm: () => void;
+  isLoading: boolean;
+}
+
+function DeleteApplicationsDialog({
+  open,
+  onOpenChange,
+  selectedCount,
+  onConfirm,
+  isLoading,
+}: DeleteApplicationsDialogProps) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Applications</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will remove {selectedCount} selected{" "}
+            {selectedCount === 1 ? "application" : "applications"} from your
+            list.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>Go Back</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
+            disabled={isLoading || selectedCount === 0}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

@@ -67,6 +67,17 @@ export async function retryJobApplication(id: string): Promise<void> {
   }
 }
 
+export async function deleteJobApplication(id: string): Promise<void> {
+  const response = await fetch(`${BaseRoute}/jobs/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const res = await response.json();
+  if (response.status > 299) {
+    throw new Error(res.error ?? "Failed to delete job application");
+  }
+}
+
 export interface UserActionLayoutItem {
   field_name: string;
   description: string | null;
