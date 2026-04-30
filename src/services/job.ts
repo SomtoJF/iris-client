@@ -20,6 +20,7 @@ export interface JobApplication {
   status: "processing" | "applied" | "failed" | "blocked" | "cancelled";
   hasApplicationData: boolean;
   failureReason?: string;
+  cancellationReason?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -168,19 +168,39 @@ function buildColumns(
         const isRetrying = retryingIds.has(row.original.id);
         const failureReason =
           row.original.status === "failed" ? row.original.failureReason : null;
+        const cancellationReason =
+          row.original.status === "cancelled"
+            ? row.original.cancellationReason
+            : null;
+
+        const hasFailureTooltip =
+          row.original.status === "failed" && !!failureReason;
+        const hasCancellationTooltip =
+          row.original.status === "cancelled" && !!cancellationReason;
+        const displayTooltip = hasFailureTooltip || hasCancellationTooltip;
         return (
           <div className="flex items-center">
-            {failureReason ? (
+            {displayTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center cursor-pointer">
-                    <AlertCircle className="w-3.5 h-3.5 mr-2 text-red-500" />
+                    {hasFailureTooltip ? (
+                      <AlertCircle
+                        className={cn("w-3.5 h-3.5 mr-2 text-red-500")}
+                      />
+                    ) : (
+                      <span
+                        className={cn("w-3 h-3 rounded-full mr-2", iconStyles)}
+                      />
+                    )}
                     <p className={cn(textStyles)}>
                       {toTitleCase(row.original.status)}
                     </p>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={6}>{failureReason}</TooltipContent>
+                <TooltipContent sideOffset={6}>
+                  {failureReason || cancellationReason}
+                </TooltipContent>
               </Tooltip>
             ) : (
               <div className="flex items-center">
@@ -213,18 +233,19 @@ function buildColumns(
               </button>
             )}
 
-            {row.original.status === "failed" && (
-              <button
-                className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
-                disabled={isRetrying}
-                onClick={() => onRetry(row.original.id)}
-              >
-                <RotateCcw
-                  className={cn("w-3 h-3 mr-1", isRetrying && "animate-spin")}
-                />
-                <span>{isRetrying ? "Retrying..." : "Retry"}</span>
-              </button>
-            )}
+            {row.original.status === "failed" ||
+              (row.original.status === "cancelled" && (
+                <button
+                  className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
+                  disabled={isRetrying}
+                  onClick={() => onRetry(row.original.id)}
+                >
+                  <RotateCcw
+                    className={cn("w-3 h-3 mr-1", isRetrying && "animate-spin")}
+                  />
+                  <span>{isRetrying ? "Retrying..." : "Retry"}</span>
+                </button>
+              ))}
 
             {row.original.status === "blocked" && (
               <button
@@ -266,7 +287,9 @@ export default function OngoingApplicationsTab() {
     null,
   );
   const [viewDataJobId, setViewDataJobId] = useState<string | null>(null);
-  const [cancelDialogJobId, setCancelDialogJobId] = useState<string | null>(null);
+  const [cancelDialogJobId, setCancelDialogJobId] = useState<string | null>(
+    null,
+  );
   const [isCancelling, setIsCancelling] = useState(false);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
@@ -366,9 +389,7 @@ export default function OngoingApplicationsTab() {
             return {
               ...oldData,
               data: oldData.data.map((j) =>
-                j.id === data.id
-                  ? { ...j, status: "cancelled" as const }
-                  : j,
+                j.id === data.id ? { ...j, status: "cancelled" as const } : j,
               ),
             };
           },

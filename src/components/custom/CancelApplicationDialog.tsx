@@ -48,13 +48,12 @@ export default function CancelApplicationDialog({
           disabled={isLoading}
         />
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>
-            Go Back
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Go Back</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={handleConfirm}
             disabled={isLoading}
+            className="bg-red-500 hover:bg-red-600 text-white"
           >
             {isLoading ? (
               <>

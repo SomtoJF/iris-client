@@ -5,7 +5,7 @@ import { Feather, SettingsIcon } from "lucide-react";
 export default function Navbar() {
   const { user } = useUserStore();
   return (
-    <nav className="w-full border-b border-gray-200 flex items-center justify-between py-1 gap-4">
+    <nav className="w-full border-b border-gray-200 flex items-center justify-between py-1 gap-4 px-4 md:px-0">
       <img src="/logo-transparent.png" alt="Iris" className="h-12 w-auto" />
       <div className="flex items-center gap-4">
         <Link
