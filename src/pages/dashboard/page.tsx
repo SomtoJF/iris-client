@@ -51,9 +51,11 @@ export default function Dashboard() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.jobApplication.lists(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error("Failed to apply to job");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to apply to job",
+      );
     } finally {
       setIsLoading(false);
     }
