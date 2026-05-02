@@ -79,7 +79,7 @@ export default function Dashboard() {
       <div className="bg-gray-50 text-gray-800 w-full px-10 py-10">
         <header>
           <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight text-balance">
-            Apply To Custom Job
+            Find your next role
           </h1>
           <p className="text-sm text-gray-600">
             Upload your resume and automate your job applications.
