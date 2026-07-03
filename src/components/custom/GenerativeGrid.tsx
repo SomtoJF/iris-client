@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 export type TableColumnDef<TData, TValue = unknown> = ColumnDef<
   TData,
@@ -37,6 +38,7 @@ export interface TableConfig<TData> {
     onPageChange: (pageIndex: number) => void;
   };
   loading: boolean;
+  onRowClick?: (row: TData) => void;
 }
 
 interface GenerativeGridProps<TData> {
@@ -44,7 +46,7 @@ interface GenerativeGridProps<TData> {
 }
 
 export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
-  const { columns, data, pagination, loading } = config;
+  const { columns, data, pagination, loading, onRowClick } = config;
 
   const table = useReactTable({
     data,
@@ -113,6 +115,10 @@ export function GenerativeGrid<TData>({ config }: GenerativeGridProps<TData>) {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={cn(
+                    onRowClick && "cursor-pointer hover:bg-gray-50",
+                  )}
+                  onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {
                     const width = (

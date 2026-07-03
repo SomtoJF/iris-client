@@ -10,12 +10,17 @@ import { toast } from "@/hooks/toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchJobsTab from "@/components/custom/SearchJobsTab";
 import OngoingApplicationsTab from "@/components/custom/OngoingApplicationsTab";
+import CoverLettersTab from "@/components/custom/CoverLettersTab";
 import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import { usePageTitle } from "@/hooks/page-title";
 
-const TAB_VALUES = ["search-jobs", "ongoing-applications"] as const;
+const TAB_VALUES = [
+  "search-jobs",
+  "ongoing-applications",
+  "cover-letters",
+] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function tabFromSearchParams(searchParams: URLSearchParams): TabValue {
@@ -122,6 +127,12 @@ export default function Dashboard() {
             >
               My Applications
             </TabsTrigger>
+            <TabsTrigger
+              value="cover-letters"
+              className="rounded-none border-0 bg-transparent px-4 py-2 shadow-none data-active:bg-transparent data-active:shadow-none focus-visible:ring-0 focus-visible:outline-none after:hidden data-active:border-b-2 data-active:border-b-purple-500 data-active:border-t-0 data-active:-mb-px text-gray-600 data-active:text-gray-900 data-active:font-medium"
+            >
+              Cover Letters
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="search-jobs">
             <SearchJobsTab />
@@ -129,6 +140,10 @@ export default function Dashboard() {
 
           <TabsContent value="ongoing-applications">
             <OngoingApplicationsTab />
+          </TabsContent>
+
+          <TabsContent value="cover-letters">
+            <CoverLettersTab />
           </TabsContent>
         </Tabs>
       </div>

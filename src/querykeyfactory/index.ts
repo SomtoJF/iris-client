@@ -4,6 +4,7 @@ import jobApplicationKeys from "./jobapplication.keys";
 import costKeys from "./cost.keys";
 import jobSearchKeys from "./jobsearch.keys";
 import issueKeys from "./issue.keys";
+import coverLetterKeys from "./coverletter.keys";
 
 export const queryKeys = {
   resume: resumeKeys,
@@ -12,4 +13,5 @@ export const queryKeys = {
   cost: costKeys,
   jobSearch: jobSearchKeys,
   issue: issueKeys,
+  coverLetter: coverLetterKeys,
 };
