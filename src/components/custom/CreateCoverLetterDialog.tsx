@@ -62,7 +62,10 @@ export default function CreateCoverLetterDialog({
   const isCreating = createMutation.isPending;
 
   const canSubmit =
-    companyName.trim() && jobTitle.trim() && url.trim() && jobDescription.trim();
+    companyName.trim() &&
+    jobTitle.trim() &&
+    url.trim() &&
+    jobDescription.trim();
 
   function resetForm() {
     setCompanyName("");
@@ -147,7 +150,7 @@ export default function CreateCoverLetterDialog({
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               disabled={isCreating}
-              className="min-h-32"
+              className="min-h-40 max-h-52"
               required
             />
             {isCreating && (
