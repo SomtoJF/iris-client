@@ -28,11 +28,14 @@ export interface CreateCoverLetterInput {
   jobTitle: string;
   jobDescription: string;
   url: string;
+  resumeId?: string;
 }
 
+// Generation runs in the background; the response only confirms it started.
+// The finished letter arrives later via a COVER_LETTER_READY realtime event.
 export interface CreateCoverLetterResponse {
   jobApplicationId: string;
-  coverLetter: string;
+  status: JobApplication["status"];
 }
 
 export interface RegenerateCoverLetterInput {

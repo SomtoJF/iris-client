@@ -53,24 +53,21 @@ export default function CoverLetterDialog({
   const regenerateMutation = useMutation({
     mutationFn: regenerateCoverLetter,
     onSuccess: (result) => {
+      // Regeneration runs in the background; the letter arrives via a realtime
+      // event. Flip the detail to processing and close the dialog.
       queryClient.setQueryData(
         queryKeys.coverLetter.detail(result.jobApplicationId),
         (old: CoverLetterDetail | undefined) =>
-          old
-            ? {
-                ...old,
-                coverLetter: result.coverLetter,
-                status: "applied" as const,
-              }
-            : old,
+          old ? { ...old, status: "processing" as const } : old,
       );
       queryClient.invalidateQueries({
         queryKey: queryKeys.coverLetter.lists(),
       });
-      toast.success("Cover letter regenerated");
+      toast.success("Regeneration started");
       setIsEditorOpen(false);
       setEditInstructions("");
       setUltraWrite(false);
+      onOpenChange(false);
     },
     onError: (err: unknown) => {
       toast.error(

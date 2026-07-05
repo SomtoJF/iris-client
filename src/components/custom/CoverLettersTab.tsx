@@ -1,10 +1,12 @@
 import {
   fetchCoverLetters,
+  regenerateCoverLetter,
   type CoverLetterListItem,
+  type FetchCoverLettersResponse,
 } from "@/services/coverletter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Loader2, Plus, Search } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCcw, Search } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -12,8 +14,10 @@ import { GenerativeGrid, type TableConfig } from "./GenerativeGrid";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
+import { useRealtimeEvents } from "@/context/RealTimeEventContext";
+import { toast } from "@/hooks/toast";
 import CoverLetterDialog from "./CoverLetterDialog";
 import CreateCoverLetterDialog from "./CreateCoverLetterDialog";
 
@@ -61,7 +65,10 @@ function statusLabel(status: CoverLetterStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function buildColumns(): (ColumnDef<CoverLetterListItem, unknown> & {
+function buildColumns(
+  onRetry: (jobApplicationId: string) => void,
+  retryingId: string | null,
+): (ColumnDef<CoverLetterListItem, unknown> & {
   shimmer?: () => React.ReactNode;
   width?: string;
 })[] {
@@ -113,15 +120,35 @@ function buildColumns(): (ColumnDef<CoverLetterListItem, unknown> & {
         const { iconStyles, textStyles } = getStatusTagConfig(
           row.original.status,
         );
+        const isRetrying = retryingId === row.original.jobApplicationId;
         return (
-          <div className="flex items-center">
-            <span className={cn("w-3 h-3 rounded-full mr-2", iconStyles)} />
+          <div className="flex items-center gap-2">
+            <span className={cn("w-3 h-3 rounded-full", iconStyles)} />
             <p className={cn(textStyles)}>{statusLabel(row.original.status)}</p>
+            {row.original.status === "failed" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2"
+                disabled={isRetrying}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRetry(row.original.jobApplicationId);
+                }}
+              >
+                {isRetrying ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <RefreshCcw className="w-3 h-3" />
+                )}
+                <span className="ml-1">Retry</span>
+              </Button>
+            )}
           </div>
         );
       },
       shimmer: () => <Skeleton className="h-6 w-24" />,
-      width: "150px",
+      width: "200px",
     },
     {
       accessorKey: "createdAt",
@@ -143,6 +170,10 @@ export default function CoverLettersTab() {
   const [activeSearch, setActiveSearch] = useState("");
   const [viewId, setViewId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+  const { addEventListener } = useRealtimeEvents();
 
   const queryKey = queryKeys.coverLetter.list({
     page: pageIndex + 1,
@@ -159,13 +190,73 @@ export default function CoverLettersTab() {
   const coverLetters = data?.data ?? [];
   const total = data?.total ?? 0;
 
+  // Patch a cover letter's status across every cached list page.
+  function patchStatus(jobApplicationId: string, status: CoverLetterStatus) {
+    queryClient.setQueriesData<FetchCoverLettersResponse>(
+      { queryKey: queryKeys.coverLetter.lists() },
+      (old) =>
+        old
+          ? {
+              ...old,
+              data: old.data.map((cl) =>
+                cl.jobApplicationId === jobApplicationId
+                  ? { ...cl, status }
+                  : cl,
+              ),
+            }
+          : old,
+    );
+  }
+
+  // Listen for background generation results and update rows in place.
+  useEffect(() => {
+    const onReady = addEventListener(
+      "COVER_LETTER_READY",
+      (d: { jobApplicationId: string }) => {
+        patchStatus(d.jobApplicationId, "applied");
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.coverLetter.detail(d.jobApplicationId),
+        });
+        toast.success("Cover letter ready");
+      },
+    );
+    const onFailed = addEventListener(
+      "COVER_LETTER_FAILED",
+      (d: { jobApplicationId: string }) => {
+        patchStatus(d.jobApplicationId, "failed");
+        toast.error("Cover letter generation failed");
+      },
+    );
+    return () => {
+      onReady();
+      onFailed();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addEventListener, queryClient]);
+
+  async function handleRetry(jobApplicationId: string) {
+    setRetryingId(jobApplicationId);
+    patchStatus(jobApplicationId, "processing");
+    try {
+      await regenerateCoverLetter({ jobApplicationId });
+      toast.success("Regeneration started");
+    } catch (err) {
+      patchStatus(jobApplicationId, "failed");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to retry cover letter",
+      );
+    } finally {
+      setRetryingId(null);
+    }
+  }
+
   function handleSearch() {
     setActiveSearch(searchInput);
     setPageIndex(0);
   }
 
   const tableConfig: TableConfig<CoverLetterListItem> = {
-    columns: buildColumns(),
+    columns: buildColumns(handleRetry, retryingId),
     data: coverLetters,
     pagination: {
       pageIndex,
@@ -174,7 +265,10 @@ export default function CoverLettersTab() {
       onPageChange: setPageIndex,
     },
     loading: isFetching,
-    onRowClick: (row) => setViewId(row.jobApplicationId),
+    // Only ready (applied) cover letters can be opened; processing/failed do nothing.
+    onRowClick: (row) => {
+      if (row.status === "applied") setViewId(row.jobApplicationId);
+    },
   };
 
   return (
@@ -227,7 +321,9 @@ export default function CoverLettersTab() {
       <CreateCoverLetterDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
-        onCreated={(result) => setViewId(result.jobApplicationId)}
+        // Generation runs in the background; the new row shows as processing and
+        // opens once its COVER_LETTER_READY event flips it to applied.
+        onCreated={() => setPageIndex(0)}
       />
     </div>
   );
