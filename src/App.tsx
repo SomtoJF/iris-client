@@ -24,6 +24,7 @@ import NewFeedbackPage from "./pages/feedback/new/page";
 import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 import { TooltipProvider } from "./components/ui/tooltip";
 import DashboardLayout from "./layout/DashboardLayout";
+import NotFound from "./pages/not-found/page";
 
 // Session expired: clear auth state so ProtectedLayout redirects to /login,
 // and drop every other cached query so no stale data survives the logout.
@@ -89,6 +90,8 @@ function App() {
                   <Route path="admin" element={<AdminPage />} />
                 </Route>
               </Route>
+
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>
         </RealtimeEventProvider>
