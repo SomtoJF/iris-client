@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 
 export interface DiscoveredJob {
   title: string;
@@ -24,30 +24,19 @@ export async function searchJobs(body: {
   location: string;
   dateCutoff: string | null;
 }): Promise<JobSearchResponse> {
-  const response = await fetch(`${BaseRoute}/jobs/search`, {
+  const res = (await apiFetch("/jobs/search", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
-  const res = (await response.json()) as { error?: string } & JobSearchResponse;
-  if (!response.ok) {
-    throw new Error(res.error ?? "Job search failed");
-  }
+    fallbackError: "Job search failed",
+  })) as JobSearchResponse;
   return { jobs: res.jobs ?? [] };
 }
 
 export async function fetchJobSearchHistory(): Promise<JobSearchHistoryEntry[]> {
-  const response = await fetch(`${BaseRoute}/jobs/search/history`, {
+  const res = (await apiFetch("/jobs/search/history", {
     method: "GET",
-    credentials: "include",
-  });
-  const res = (await response.json()) as {
-    error?: string;
-    data?: JobSearchHistoryEntry[];
-  };
-  if (!response.ok) {
-    throw new Error(res.error ?? "Failed to load search history");
-  }
+    fallbackError: "Failed to load search history",
+  })) as { data?: JobSearchHistoryEntry[] };
   return res.data ?? [];
 }

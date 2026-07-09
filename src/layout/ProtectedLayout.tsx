@@ -1,22 +1,29 @@
 import { Navigate, Outlet } from "react-router";
 import { useFetchCurrentUser } from "@/hooks/user";
 import { useUserStore } from "@/zustand/userstore";
+import { ApiError } from "@/services/api";
 import { Loader } from "lucide-react";
 import { useEffect } from "react";
 
 export function ProtectedLayout() {
-  const { user, isFetching, isPending } = useFetchCurrentUser();
+  const { user, isFetching, isPending, error } = useFetchCurrentUser();
   const { setUser, clearUser } = useUserStore();
+
+  // react-query keeps the last successful user after a failed refetch, so an
+  // expired session leaves `user` truthy — treat a 401 as logged out regardless
+  const sessionExpired = error instanceof ApiError && error.status === 401;
 
   useEffect(() => {
     if (isFetching) return;
 
-    if (user) {
+    if (sessionExpired) {
+      clearUser();
+    } else if (user) {
       setUser(user);
     } else {
       clearUser();
     }
-  }, [user, isFetching, setUser, clearUser]);
+  }, [user, isFetching, sessionExpired, setUser, clearUser]);
 
   if (isPending) {
     return (
@@ -26,7 +33,7 @@ export function ProtectedLayout() {
     );
   }
 
-  if (!user) {
+  if (sessionExpired || !user) {
     return <Navigate to="/login" replace />;
   }
 

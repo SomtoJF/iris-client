@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 import type { JobApplication } from "./job";
 
 export interface CoverLetterListItem {
@@ -54,62 +54,40 @@ export async function fetchCoverLetters(
     limit: String(limit),
   });
   if (search) params.set("search", search);
-  const response = await fetch(`${BaseRoute}/coverletter?${params}`, {
+  const res = await apiFetch(`/coverletter?${params}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch cover letters",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch cover letters");
-  }
   return res.data;
 }
 
 export async function fetchCoverLetter(
   jobApplicationId: string,
 ): Promise<CoverLetterDetail> {
-  const response = await fetch(
-    `${BaseRoute}/coverletter/job-application/${jobApplicationId}`,
-    {
-      method: "GET",
-      credentials: "include",
-    },
-  );
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch cover letter");
-  }
-  return res;
+  return apiFetch(`/coverletter/job-application/${jobApplicationId}`, {
+    method: "GET",
+    fallbackError: "Failed to fetch cover letter",
+  });
 }
 
 export async function createCoverLetter(
   data: CreateCoverLetterInput,
 ): Promise<CreateCoverLetterResponse> {
-  const response = await fetch(`${BaseRoute}/coverletter`, {
+  return apiFetch("/coverletter", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    fallbackError: "Failed to create cover letter",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to create cover letter");
-  }
-  return res;
 }
 
 export async function regenerateCoverLetter(
   data: RegenerateCoverLetterInput,
 ): Promise<CreateCoverLetterResponse> {
-  const response = await fetch(`${BaseRoute}/coverletter/regenerate`, {
+  return apiFetch("/coverletter/regenerate", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    fallbackError: "Failed to regenerate cover letter",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to regenerate cover letter");
-  }
-  return res;
 }

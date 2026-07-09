@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 
 export interface Resume {
   id: string;
@@ -11,26 +11,18 @@ export interface Resume {
 }
 
 export async function fetchResumes(): Promise<Resume[]> {
-  const response = await fetch(`${BaseRoute}/resumes`, {
+  const res = await apiFetch("/resumes", {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch resumes",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch resumes");
-  }
   return res.data;
 }
 
 export async function setResumeAsActive(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/resumes/${id}/activate`, {
+  await apiFetch(`/resumes/${id}/activate`, {
     method: "PUT",
-    credentials: "include",
+    fallbackError: "Failed to set resume as active",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to set resume as active");
-  }
 }
 
 export async function uploadResume(file: File, processResume: boolean = false): Promise<Resume> {
@@ -38,40 +30,25 @@ export async function uploadResume(file: File, processResume: boolean = false): 
   formData.append("file", file);
   formData.append("processResume", processResume.toString());
 
-  const response = await fetch(`${BaseRoute}/resumes`, {
+  const res = await apiFetch("/resumes", {
     method: "POST",
-    credentials: "include",
     body: formData,
+    fallbackError: "Failed to upload resume",
   });
-
-  const res = await response.json();
-  if (response.status !== 201) {
-    throw new Error(res.error ?? "Failed to upload resume");
-  }
   return res.data;
 }
 
 export async function deleteResume(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/resumes/${id}`, {
+  await apiFetch(`/resumes/${id}`, {
     method: "DELETE",
-    credentials: "include",
+    fallbackError: "Failed to delete resume",
   });
-
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to delete resume");
-  }
 }
 
 export async function getResumeDownloadUrl(id: string): Promise<string> {
-  const response = await fetch(`${BaseRoute}/resumes/${id}/download`, {
+  const res = await apiFetch(`/resumes/${id}/download`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to get download URL",
   });
-
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to get download URL");
-  }
   return res.url;
 }

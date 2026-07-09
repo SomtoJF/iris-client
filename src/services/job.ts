@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 import z from "zod";
 
 export const jobApplicationSchema = z.object({
@@ -26,56 +26,36 @@ export interface JobApplication {
 }
 
 export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
-  const response = await fetch(`${BaseRoute}/jobs/apply`, {
+  return apiFetch("/jobs/apply", {
     method: "POST",
-    body: JSON.stringify({url: data.jobUrl}),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    body: JSON.stringify({ url: data.jobUrl }),
+    headers: { "Content-Type": "application/json" },
+    fallbackError: "Failed to apply to job",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to apply to job");
-  }
-  return res;
 }
-
 
 export async function fetchAllJobApplications(page: number, limit: number, search?: string): Promise<FetchAllJobApplicationsResponse> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search) params.set("search", search);
-  const response = await fetch(`${BaseRoute}/jobs?${params}`, {
+  const res = await apiFetch(`/jobs?${params}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch job applications",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch job applications");
-  }
   return res.data;
 }
 
 export async function retryJobApplication(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/jobs/${id}/retry-application`, {
+  await apiFetch(`/jobs/${id}/retry-application`, {
     method: "POST",
-    credentials: "include",
+    fallbackError: "Failed to retry job application",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to retry job application");
-  }
 }
 
 export async function deleteJobApplication(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/jobs/${id}`, {
+  await apiFetch(`/jobs/${id}`, {
     method: "DELETE",
-    credentials: "include",
+    fallbackError: "Failed to delete job application",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to delete job application");
-  }
 }
 
 export interface UserActionLayoutItem {
@@ -101,15 +81,10 @@ export interface UserActionResultItem {
 }
 
 export async function fetchUserAction(jobApplicationId: string): Promise<UserActionResponse> {
-  const response = await fetch(`${BaseRoute}/jobs/${jobApplicationId}/user-action`, {
+  return apiFetch(`/jobs/${jobApplicationId}/user-action`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch user action",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch user action");
-  }
-  return res;
 }
 
 export interface JobApplicationQuestion {
@@ -131,43 +106,31 @@ export interface JobApplicationDataResponse {
 }
 
 export async function fetchJobApplicationData(id: string): Promise<JobApplicationDataResponse> {
-  const response = await fetch(`${BaseRoute}/jobs/${id}/application-data`, {
+  const res = await apiFetch(`/jobs/${id}/application-data`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch application data",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch application data");
-  }
   return res.data;
 }
 
 export async function cancelJobApplication(id: string, reason?: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/jobs/${id}/cancel`, {
+  await apiFetch(`/jobs/${id}/cancel`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ reason: reason || null }),
+    fallbackError: "Failed to cancel job application",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to cancel job application");
-  }
 }
 
 export async function sendWorkflowSignal(workflowId: string, signalName: string, payload: unknown): Promise<void> {
-  const response = await fetch(`${BaseRoute}/workflows/signal`, {
+  await apiFetch("/workflows/signal", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({
       workflow_id: workflowId,
       signal_name: signalName,
       payload,
     }),
+    fallbackError: "Failed to send workflow signal",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to send workflow signal");
-  }
 }

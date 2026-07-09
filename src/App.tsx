@@ -5,7 +5,10 @@ import { Toaster } from "./components/ui/sonner";
 import { RealtimeEventProvider } from "./context/RealTimeEventContext";
 import Login from "./pages/login/page";
 import Signup from "./pages/signup/page";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiError } from "./services/api";
+import { useUserStore } from "./zustand/userstore";
+import { queryKeys } from "./querykeyfactory";
 import Dashboard from "./pages/dashboard/page";
 import { ProtectedLayout } from "./layout/ProtectedLayout";
 import { AuthLayout } from "./layout/AuthLayout";
@@ -22,8 +25,24 @@ import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 import { TooltipProvider } from "./components/ui/tooltip";
 import DashboardLayout from "./layout/DashboardLayout";
 
+// Session expired: clear auth state so ProtectedLayout redirects to /login,
+// and drop every other cached query so no stale data survives the logout.
+function handleAuthError(error: unknown) {
+  if (!(error instanceof ApiError) || error.status !== 401 || error.ignore401) return;
+  useUserStore.getState().clearUser();
+  queryClient.setQueryData(queryKeys.user.current, null);
+  const userKey = JSON.stringify(queryKeys.user.current);
+  queryClient.removeQueries({
+    predicate: (query) => JSON.stringify(query.queryKey) !== userKey,
+  });
+}
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: handleAuthError }),
+  mutationCache: new MutationCache({ onError: handleAuthError }),
+});
+
 function App() {
-  const queryClient = new QueryClient();
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>

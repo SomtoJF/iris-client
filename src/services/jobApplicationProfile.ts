@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 import z from "zod";
 import { countries } from "country-data-list";
 
@@ -130,44 +130,32 @@ export type UpdateJobApplicationProfileRequest = Omit<
 >;
 
 export async function getJobApplicationProfile(): Promise<JobApplicationProfileResponse> {
-  const response = await fetch(`${BaseRoute}/jobapplicationprofile`, {
+  const res = await apiFetch("/jobapplicationprofile", {
     method: "GET",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
+    fallbackError: "Failed to fetch job application profile",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch job application profile");
-  }
   return res.data;
 }
 
 export async function patchJobApplicationProfile(
   data: Partial<UpdateJobApplicationProfileRequest>
 ): Promise<void> {
-  const response = await fetch(`${BaseRoute}/jobapplicationprofile`, {
+  await apiFetch("/jobapplicationprofile", {
     method: "PATCH",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
+    fallbackError: "Failed to update job application profile",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to update job application profile");
-  }
 }
 
 export async function upsertJobApplicationProfile(
   data: UpdateJobApplicationProfileRequest
 ): Promise<void> {
-  const response = await fetch(`${BaseRoute}/jobapplicationprofile`, {
+  await apiFetch("/jobapplicationprofile", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
+    fallbackError: "Failed to save job application profile",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to save job application profile");
-  }
 }

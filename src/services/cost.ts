@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 
 export interface CostTrackingUser {
   id: string;
@@ -49,26 +49,16 @@ export async function fetchCostTracking(
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (userId) params.set("user_id", userId);
   if (jobApplicationId) params.set("job_application_id", jobApplicationId);
-  const response = await fetch(`${BaseRoute}/cost?${params}`, {
+  return apiFetch(`/cost?${params}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch cost tracking",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch cost tracking");
-  }
-  return res;
 }
 
 export async function searchCostEntities(query: string): Promise<SearchCostEntitiesResponse> {
   const params = new URLSearchParams({ q: query });
-  const response = await fetch(`${BaseRoute}/cost/search?${params}`, {
+  return apiFetch(`/cost/search?${params}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to search cost entities",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to search cost entities");
-  }
-  return res;
 }

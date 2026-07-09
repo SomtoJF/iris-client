@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 import z from "zod";
 
 export const loginSchema = z.object({
@@ -14,35 +14,23 @@ export const signupSchema = z.object({
 });
 
 export async function login(data: z.infer<typeof loginSchema>) {
-  const response = await fetch(`${BaseRoute}/login`, {
+  return apiFetch("/login", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    fallbackError: "Failed to login",
+    ignore401: true,
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to login");
-  }
-  return res;
 }
 
 export async function signup(data: z.infer<typeof signupSchema>) {
-  const response = await fetch(`${BaseRoute}/signup`, {
+  return apiFetch("/signup", {
     method: "POST",
     body: JSON.stringify(data),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    fallbackError: "Failed to signup",
+    ignore401: true,
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to signup");
-  }
-  return res;
 }
 
 export interface User {
@@ -68,30 +56,19 @@ export const resetPasswordSchema = z.object({
 });
 
 export async function resetPassword(data: { password: string; newPassword: string }) {
-  const response = await fetch(`${BaseRoute}/reset-password`, {
+  return apiFetch("/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    fallbackError: "Failed to reset password",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to reset password");
-  }
-  return res;
 }
 
 export async function getCurrentUser(): Promise<User> {
-  const response = await fetch(`${BaseRoute}/me`, {
+  const res = await apiFetch("/me", {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    fallbackError: "Failed to fetch current user",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch current user");
-  }
   return res.data;
 }

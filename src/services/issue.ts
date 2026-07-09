@@ -1,4 +1,4 @@
-import { BaseRoute } from "./routes";
+import { apiFetch } from "./api";
 
 export type IssueType = "bug" | "feature_request";
 
@@ -96,27 +96,18 @@ export async function fetchIssues(params: {
   if (params.sort) sp.set("sort", params.sort);
   if (params.filter) sp.set("filter", params.filter);
 
-  const response = await fetch(`${BaseRoute}/issues?${sp}`, {
+  const res = await apiFetch(`/issues?${sp}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch issues",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch issues");
-  }
   return res.data;
 }
 
 export async function fetchIssue(id: string): Promise<IssueDetail> {
-  const response = await fetch(`${BaseRoute}/issue/${id}`, {
+  return apiFetch(`/issue/${id}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch issue",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch issue");
-  }
-  return res;
 }
 
 export async function fetchIssueComments(params: {
@@ -128,14 +119,10 @@ export async function fetchIssueComments(params: {
     page: String(params.page),
     limit: String(params.limit),
   });
-  const response = await fetch(`${BaseRoute}/issue/${params.id}/comments?${sp}`, {
+  const res = await apiFetch(`/issue/${params.id}/comments?${sp}`, {
     method: "GET",
-    credentials: "include",
+    fallbackError: "Failed to fetch comments",
   });
-  const res = await response.json();
-  if (response.status !== 200) {
-    throw new Error(res.error ?? "Failed to fetch comments");
-  }
   return res.data;
 }
 
@@ -144,80 +131,56 @@ export async function createIssueComment(payload: {
   commentJson: string;
   commentText: string;
 }): Promise<void> {
-  const response = await fetch(`${BaseRoute}/issue/${payload.id}/comments`, {
+  await apiFetch(`/issue/${payload.id}/comments`, {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       commentJson: payload.commentJson,
       commentText: payload.commentText,
     }),
+    fallbackError: "Failed to create comment",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to create comment");
-  }
 }
 
 export async function upvoteIssue(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/issue/${id}/upvote`, {
+  await apiFetch(`/issue/${id}/upvote`, {
     method: "POST",
-    credentials: "include",
+    fallbackError: "Failed to upvote issue",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to upvote issue");
-  }
 }
 
 export async function undoUpvoteIssue(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/issue/${id}/upvote`, {
+  await apiFetch(`/issue/${id}/upvote`, {
     method: "DELETE",
-    credentials: "include",
+    fallbackError: "Failed to remove issue upvote",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to remove issue upvote");
-  }
 }
 
 export async function upvoteIssueComment(payload: {
   id: string;
   commentId: string;
 }): Promise<void> {
-  const response = await fetch(
-    `${BaseRoute}/issue/${payload.id}/comments/${payload.commentId}/upvote`,
-    { method: "POST", credentials: "include" },
-  );
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to upvote comment");
-  }
+  await apiFetch(`/issue/${payload.id}/comments/${payload.commentId}/upvote`, {
+    method: "POST",
+    fallbackError: "Failed to upvote comment",
+  });
 }
 
 export async function undoUpvoteIssueComment(payload: {
   id: string;
   commentId: string;
 }): Promise<void> {
-  const response = await fetch(
-    `${BaseRoute}/issue/${payload.id}/comments/${payload.commentId}/upvote`,
-    { method: "DELETE", credentials: "include" },
-  );
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to remove comment upvote");
-  }
+  await apiFetch(`/issue/${payload.id}/comments/${payload.commentId}/upvote`, {
+    method: "DELETE",
+    fallbackError: "Failed to remove comment upvote",
+  });
 }
 
 export async function markIssueResolved(id: string): Promise<void> {
-  const response = await fetch(`${BaseRoute}/issue/${id}/resolve`, {
+  await apiFetch(`/issue/${id}/resolve`, {
     method: "POST",
-    credentials: "include",
+    fallbackError: "Failed to mark issue as resolved",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to mark issue as resolved");
-  }
 }
 
 export async function createIssue(payload: {
@@ -227,15 +190,10 @@ export async function createIssue(payload: {
   contentJson: string;
   contentText: string;
 }): Promise<void> {
-  const response = await fetch(`${BaseRoute}/issue`, {
+  await apiFetch("/issue", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    fallbackError: "Failed to create issue",
   });
-  const res = await response.json();
-  if (response.status > 299) {
-    throw new Error(res.error ?? "Failed to create issue");
-  }
 }
-
