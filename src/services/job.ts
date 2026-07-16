@@ -41,9 +41,10 @@ export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
   });
 }
 
-export async function fetchAllJobApplications(page: number, limit: number, search?: string): Promise<FetchAllJobApplicationsResponse> {
+export async function fetchAllJobApplications(page: number, limit: number, search?: string, status?: JobApplication["status"]): Promise<FetchAllJobApplicationsResponse> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search) params.set("search", search);
+  if (status) params.set("status", status);
   const res = await apiFetch(`/jobs?${params}`, {
     method: "GET",
     fallbackError: "Failed to fetch job applications",

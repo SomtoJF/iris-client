@@ -27,6 +27,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRealtimeEvents } from "@/context/RealTimeEventContext";
 import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +62,15 @@ dayjs.extend(relativeTime);
 const LIMIT = 10;
 
 type JobStatus = JobApplication["status"];
+
+const ALL_STATUSES: JobStatus[] = [
+  "processing",
+  "applied",
+  "failed",
+  "blocked",
+  "cancelled",
+  "halted",
+];
 
 function isSelectableStatus(status: JobStatus): boolean {
   return status === "failed" || status === "cancelled" || status === "halted";
@@ -111,6 +127,8 @@ function buildColumns(
   onTakeAction: (id: string) => void,
   onViewApplicationData: (id: string) => void,
   onCancelApplication: (id: string) => void,
+  statusFilter: JobStatus | "all",
+  onStatusFilterChange: (status: JobStatus | "all") => void,
 ): (ColumnDef<JobApplication, unknown> & {
   shimmer?: () => React.ReactNode;
   width?: string;
@@ -181,7 +199,30 @@ function buildColumns(
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: () => (
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => onStatusFilterChange(v as JobStatus | "all")}
+        >
+          <SelectTrigger
+            size="sm"
+            className={cn(
+              "h-7 border-none shadow-none px-0 gap-1 font-medium bg-transparent dark:bg-transparent",
+              statusFilter !== "all" && "text-blue-500",
+            )}
+          >
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Status</SelectItem>
+            {ALL_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {toTitleCase(s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
       cell: ({ row }) => {
         const { iconStyles, textStyles } = getStatusTagConfig(
           row.original.status,
@@ -308,6 +349,7 @@ export default function OngoingApplicationsTab() {
   const [pageIndex, setPageIndex] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<JobStatus | "all">("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(
@@ -323,16 +365,24 @@ export default function OngoingApplicationsTab() {
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
 
+  const activeStatus = statusFilter === "all" ? undefined : statusFilter;
+
   const queryKey = queryKeys.jobApplication.list({
     page: pageIndex + 1,
     limit: LIMIT,
     search: activeSearch || undefined,
+    status: activeStatus,
   });
 
   const { data, isFetching } = useQuery({
     queryKey,
     queryFn: () =>
-      fetchAllJobApplications(pageIndex + 1, LIMIT, activeSearch || undefined),
+      fetchAllJobApplications(
+        pageIndex + 1,
+        LIMIT,
+        activeSearch || undefined,
+        activeStatus,
+      ),
   });
 
   const jobApplications = data?.data ?? [];
@@ -581,6 +631,11 @@ export default function OngoingApplicationsTab() {
     }
   }
 
+  function handleStatusFilterChange(status: JobStatus | "all") {
+    setStatusFilter(status);
+    setPageIndex(0);
+  }
+
   function handleSearch() {
     setActiveSearch(searchInput);
     setPageIndex(0);
@@ -645,6 +700,8 @@ export default function OngoingApplicationsTab() {
     handleTakeAction,
     handleViewApplicationData,
     handleCancelApplication,
+    statusFilter,
+    handleStatusFilterChange,
   );
 
   const tableConfig: TableConfig<JobApplication> = {
