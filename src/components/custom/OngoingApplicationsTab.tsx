@@ -57,7 +57,7 @@ const LIMIT = 10;
 type JobStatus = JobApplication["status"];
 
 function isSelectableStatus(status: JobStatus): boolean {
-  return status === "failed" || status === "cancelled";
+  return status === "failed" || status === "cancelled" || status === "halted";
 }
 
 function getStatusTagConfig(status: JobStatus): {
@@ -89,6 +89,11 @@ function getStatusTagConfig(status: JobStatus): {
       return {
         textStyles: "text-slate-400",
         iconStyles: "bg-slate-400 opacity-50",
+      };
+    case "halted":
+      return {
+        textStyles: "text-orange-600",
+        iconStyles: "bg-orange-600 opacity-50",
       };
     default:
       return {
@@ -184,6 +189,8 @@ function buildColumns(
         const isRetrying = retryingIds.has(row.original.id);
         const failureReason =
           row.original.status === "failed" ? row.original.failureReason : null;
+        const haltReason =
+          row.original.status === "halted" ? row.original.haltReason : null;
         const cancellationReason =
           row.original.status === "cancelled"
             ? row.original.cancellationReason
@@ -191,18 +198,23 @@ function buildColumns(
 
         const hasFailureTooltip =
           row.original.status === "failed" && !!failureReason;
+        const hasHaltTooltip = row.original.status === "halted" && !!haltReason;
         const hasCancellationTooltip =
           row.original.status === "cancelled" && !!cancellationReason;
-        const displayTooltip = hasFailureTooltip || hasCancellationTooltip;
+        const displayTooltip =
+          hasFailureTooltip || hasHaltTooltip || hasCancellationTooltip;
         return (
           <div className="flex items-center">
             {displayTooltip ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center cursor-pointer">
-                    {hasFailureTooltip ? (
+                    {hasFailureTooltip || hasHaltTooltip ? (
                       <AlertCircle
-                        className={cn("w-3.5 h-3.5 mr-2 text-red-500")}
+                        className={cn(
+                          "w-3.5 h-3.5 mr-2",
+                          hasHaltTooltip ? "text-orange-600" : "text-red-500",
+                        )}
                       />
                     ) : (
                       <span
@@ -215,7 +227,7 @@ function buildColumns(
                   </div>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={6}>
-                  {failureReason || cancellationReason}
+                  {failureReason || haltReason || cancellationReason}
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -369,6 +381,27 @@ export default function OngoingApplicationsTab() {
       },
     );
 
+    const applicationHaltedHandler = addEventListener(
+      "APPLICATION_HALTED",
+      (data) => {
+        toast.info(
+          `Application halted for ${data.jobTitle} at ${data.companyName} — truthful answers were not possible`,
+        );
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id ? { ...j, status: "halted" as const } : j,
+              ),
+            };
+          },
+        );
+      },
+    );
+
     const userActionRequiredHandler = addEventListener(
       "USER_ACTION_REQUIRED",
       (data) => {
@@ -417,6 +450,7 @@ export default function OngoingApplicationsTab() {
     return () => {
       applicationSuccessHandler();
       applicationFailedHandler();
+      applicationHaltedHandler();
       userActionRequiredHandler();
       applicationCancelledHandler();
     };
@@ -445,6 +479,7 @@ export default function OngoingApplicationsTab() {
                   ...job,
                   status: "processing" as const,
                   failureReason: undefined,
+                  haltReason: undefined,
                   cancellationReason: undefined,
                 }
               : job,

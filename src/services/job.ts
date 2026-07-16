@@ -17,10 +17,17 @@ export interface JobApplication {
   url: string;
   jobTitle: string;
   companyName: string;
-  status: "processing" | "applied" | "failed" | "blocked" | "cancelled";
+  status:
+    | "processing"
+    | "applied"
+    | "failed"
+    | "blocked"
+    | "cancelled"
+    | "halted";
   hasApplicationData: boolean;
   failureReason?: string;
   cancellationReason?: string;
+  haltReason?: string;
   createdAt: string;
   updatedAt: string;
 }
