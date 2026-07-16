@@ -96,9 +96,6 @@ function JobResultRow({
 }) {
   const pending = applyingUrl === job.url;
   const disabled = job.applied || pending;
-  const openJobInNewTab = () => {
-    window.open(job.url, "_blank", "noopener,noreferrer");
-  };
 
   const datePostedLabel = useMemo(() => {
     if (!job.datePosted) return null;
@@ -109,11 +106,17 @@ function JobResultRow({
 
   return (
     <div
-      onClick={openJobInNewTab}
       className={cn(
-        "group flex cursor-pointer flex-row items-start gap-3 border-b border-border py-4 last:border-b-0 hover:bg-muted/50",
+        "group relative flex flex-row items-start gap-3 border-b border-border py-4 last:border-b-0 hover:bg-muted/50",
       )}
     >
+      <a
+        href={job.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${job.title} at ${job.companyName}`}
+        className="absolute inset-0"
+      />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="truncate font-semibold text-foreground transition-colors group-hover:text-purple-600">
@@ -129,15 +132,12 @@ function JobResultRow({
           {job.companyName}
         </p>
       </div>
-      <div className="shrink-0 pt-0.5">
+      <div className="relative z-10 shrink-0 pt-0.5">
         <Button
           type="button"
           size="sm"
           disabled={disabled}
-          onClick={(e) => {
-            e.stopPropagation();
-            onApply(job.url);
-          }}
+          onClick={() => onApply(job.url)}
         >
           {job.applied ? (
             "Applied"
