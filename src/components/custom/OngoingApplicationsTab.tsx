@@ -254,7 +254,7 @@ function buildColumns(
                       <AlertCircle
                         className={cn(
                           "w-3.5 h-3.5 mr-2",
-                          hasHaltTooltip ? "text-orange-600" : "text-red-500",
+                          hasHaltTooltip ? "text-orange-400" : "text-red-500",
                         )}
                       />
                     ) : (
