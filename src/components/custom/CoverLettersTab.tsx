@@ -126,10 +126,8 @@ function buildColumns(
             <span className={cn("w-3 h-3 rounded-full", iconStyles)} />
             <p className={cn(textStyles)}>{statusLabel(row.original.status)}</p>
             {row.original.status === "failed" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 px-2"
+              <button
+                className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
                 disabled={isRetrying}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -142,7 +140,7 @@ function buildColumns(
                   <RefreshCcw className="w-3 h-3" />
                 )}
                 <span className="ml-1">Retry</span>
-              </Button>
+              </button>
             )}
           </div>
         );
