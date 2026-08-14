@@ -188,7 +188,7 @@ function buildColumns(
           href={row.original.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-2 max-w-full"
+          className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer inline-flex items-center gap-2 max-w-full"
         >
           <span className="truncate">External Link</span>
           <ExternalLink className="w-4 h-4 flex-shrink-0" />
