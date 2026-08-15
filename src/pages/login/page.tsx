@@ -83,6 +83,28 @@ export default function Login() {
                 Sign up
               </Link>
             </div>
+
+            <p className="text-center text-xs text-muted-foreground">
+              By logging in, you agree to our{" "}
+              <a
+                href="https://applywithiris.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Terms of Use
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://applywithiris.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
           </form>
         </CardContent>
       </Card>
