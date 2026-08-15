@@ -28,6 +28,7 @@ export interface JobApplication {
   failureReason?: string;
   cancellationReason?: string;
   haltReason?: string;
+  appliedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

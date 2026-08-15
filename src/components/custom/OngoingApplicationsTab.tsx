@@ -214,7 +214,7 @@ function buildColumns(
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Status</SelectItem>
+            <SelectItem value="all">Application Status</SelectItem>
             {ALL_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
                 {toTitleCase(s)}
@@ -334,11 +334,14 @@ function buildColumns(
     {
       accessorKey: "createdAt",
       header: "Date Applied",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {dayjs(row.original.createdAt).fromNow()}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const appliedAt = row.original.appliedAt ?? row.original.createdAt;
+        return (
+          <span className="text-sm text-muted-foreground">
+            {dayjs(appliedAt).fromNow()}
+          </span>
+        );
+      },
       shimmer: () => <Skeleton className="h-4 w-20" />,
       width: "120px",
     },
