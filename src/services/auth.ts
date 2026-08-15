@@ -64,6 +64,14 @@ export async function resetPassword(data: { password: string; newPassword: strin
   });
 }
 
+export async function logout() {
+  return apiFetch("/logout", {
+    method: "POST",
+    fallbackError: "Failed to logout",
+    ignore401: true,
+  });
+}
+
 export async function getCurrentUser(): Promise<User> {
   const res = await apiFetch("/me", {
     method: "GET",
