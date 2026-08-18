@@ -31,7 +31,7 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
     return "Indeed job URLs are not supported. Try looking up the job on another site.";
   }
   if (!isGreenhouseJobUrl(urlString)) {
-    return "Non-Greenhouse job URLs are temporarily disabled.";
+    return "Non-Greenhouse job URLs are temporarily disabled. Apply using the extension.";
   }
   if (
     host === "seek.com.au" ||

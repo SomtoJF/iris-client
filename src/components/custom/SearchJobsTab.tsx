@@ -176,7 +176,8 @@ function JobResultRow({
               </span>
             </TooltipTrigger>
             <TooltipContent sideOffset={6}>
-              Auto-apply to non-greenhouse jobs temporarily disabled.
+              Auto-apply to non-Greenhouse jobs temporarily disabled. Apply
+              using the extension instead.
             </TooltipContent>
           </Tooltip>
         )}
