@@ -9,10 +9,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
+import { Field, FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 /** Returns a user-facing message when the URL must not be used, or null if allowed. */
 function blockedCustomJobUrlMessage(urlString: string): string | null {
@@ -29,6 +29,9 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
   }
   if (host === "indeed.com" || host.endsWith(".indeed.com")) {
     return "Indeed job URLs are not supported. Try looking up the job on another site.";
+  }
+  if (!isGreenhouseJobUrl(urlString)) {
+    return "Non-Greenhouse job URLs are temporarily disabled.";
   }
   if (
     host === "seek.com.au" ||
@@ -50,6 +53,17 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
     return "Wellfound job URLs are not supported. Try looking up the job on another site.";
   }
   return null;
+}
+
+function isGreenhouseJobUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    return (
+      host === "job-boards.greenhouse.io" || host === "boards.greenhouse.io"
+    );
+  } catch {
+    return false;
+  }
 }
 
 interface CustomJobDialogProps {
@@ -100,7 +114,7 @@ export default function CustomJobDialog({
                 onChange={(e) => setJobUrl(e.target.value)}
                 required
               />
-              <FieldDescription className="flex items-center gap-1.5 text-xs text-yellow-700">
+              {/* <FieldDescription className="flex items-center gap-1.5 text-xs text-yellow-700">
                 <AlertTriangle
                   className="mt-0.5 size-3.5 shrink-0"
                   aria-hidden
@@ -109,7 +123,7 @@ export default function CustomJobDialog({
                   Make sure the job URL leads to the job description page.
                   Greenhouse is currently the most reliable source.
                 </span>
-              </FieldDescription>
+              </FieldDescription> */}
               {blockedMessage ? (
                 <p className="text-xs text-destructive" role="alert">
                   {blockedMessage}

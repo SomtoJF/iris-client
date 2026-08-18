@@ -11,6 +11,11 @@ import { useSearchParams } from "react-router";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -85,6 +90,17 @@ function countryNameFromAlpha2(alpha2: string): string {
   return c?.name ?? alpha2;
 }
 
+function isGreenhouseJobUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    return (
+      host === "job-boards.greenhouse.io" || host === "boards.greenhouse.io"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function JobResultRow({
   job,
   applyingUrl,
@@ -95,7 +111,8 @@ function JobResultRow({
   onApply: (url: string) => void;
 }) {
   const pending = applyingUrl === job.url;
-  const disabled = job.applied || pending;
+  const canAutoApply = isGreenhouseJobUrl(job.url);
+  const disabled = job.applied || pending || !canAutoApply;
 
   const datePostedLabel = useMemo(() => {
     if (!job.datePosted) return null;
@@ -132,21 +149,37 @@ function JobResultRow({
           {job.companyName}
         </p>
       </div>
+
       <div className="relative z-10 shrink-0 pt-0.5">
-        <Button
-          type="button"
-          size="sm"
-          disabled={disabled}
-          onClick={() => onApply(job.url)}
-        >
-          {job.applied ? (
-            "Applied"
-          ) : pending ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          ) : (
-            "Apply now"
-          )}
-        </Button>
+        {canAutoApply || job.applied ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={disabled}
+            onClick={() => onApply(job.url)}
+          >
+            {job.applied ? (
+              "Applied"
+            ) : pending ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              "Apply now"
+            )}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Button type="button" size="sm" disabled>
+                  Apply now
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={6}>
+              Auto-apply to non-greenhouse jobs temporarily disabled.
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
