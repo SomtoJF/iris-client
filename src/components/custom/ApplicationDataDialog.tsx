@@ -136,7 +136,7 @@ export default function ApplicationDataDialog({
                     <FileText className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium">
-                        {data.resume.fileName}
+                        {data.resume.displayName || data.resume.fileName}
                       </p>
                       <p className="text-xs text-gray-500">
                         {formatFileSize(data.resume.fileSize)}

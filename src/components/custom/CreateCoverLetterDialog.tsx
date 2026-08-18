@@ -216,7 +216,7 @@ export default function CreateCoverLetterDialog({
               Resume <RequiredMark />
               {selectedResume && (
                 <span className="text-gray-500 font-normal ml-1 truncate">
-                  — {selectedResume.fileName}
+                  — {selectedResume.displayName || selectedResume.fileName}
                 </span>
               )}
             </button>
@@ -253,7 +253,7 @@ export default function CreateCoverLetterDialog({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-medium truncate">
-                                {resume.fileName}
+                                {resume.displayName || resume.fileName}
                               </p>
                               {resume.isActive && (
                                 <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded shrink-0">

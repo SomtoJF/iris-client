@@ -66,10 +66,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleResumeUploadSubmit = async (file: File) => {
+  const handleResumeUploadSubmit = async (file: File, displayName?: string) => {
     try {
       setIsLoading(true);
-      await uploadResume(file);
+      await uploadResume(file, false, displayName);
       toast.success("Resume uploaded successfully");
       setIsResumeUploadDialogOpen(false);
     } catch (error) {

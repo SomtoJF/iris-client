@@ -104,6 +104,7 @@ export interface JobApplicationQuestion {
 
 export interface JobApplicationDataResume {
   id: string;
+  displayName?: string;
   fileName: string;
   fileSize: number;
 }
