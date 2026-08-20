@@ -126,7 +126,7 @@ export default function CreateCoverLetterDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-lg max-h-[85vh] overflow-y-auto"
+        className="sm:max-w-xl max-h-[85vh] overflow-y-auto"
         onInteractOutside={(e) => {
           if (isCreating) e.preventDefault();
         }}
@@ -222,7 +222,7 @@ export default function CreateCoverLetterDialog({
             </button>
 
             {resumesOpen && (
-              <div className="max-h-60 overflow-y-auto pl-5">
+              <div className="max-h-60 overflow-y-auto p-3">
                 {resumes.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">
                     No resumes uploaded yet

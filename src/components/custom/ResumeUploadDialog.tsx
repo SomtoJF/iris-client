@@ -215,7 +215,7 @@ export default function ResumeUploadDialog({
         </DialogHeader>
 
         {/* Resume List */}
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+        <div className="space-y-2 max-h-60 overflow-y-auto p-3">
           {resumes.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">
               No resumes uploaded yet
