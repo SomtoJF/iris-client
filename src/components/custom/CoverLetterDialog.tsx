@@ -31,13 +31,13 @@ import { useState } from "react";
 interface CoverLetterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  jobApplicationId: string | null;
+  coverLetterId: string | null;
 }
 
 export default function CoverLetterDialog({
   open,
   onOpenChange,
-  jobApplicationId,
+  coverLetterId,
 }: CoverLetterDialogProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editInstructions, setEditInstructions] = useState("");
@@ -45,9 +45,9 @@ export default function CoverLetterDialog({
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery<CoverLetterDetail>({
-    queryKey: queryKeys.coverLetter.detail(jobApplicationId ?? ""),
-    queryFn: () => fetchCoverLetter(jobApplicationId!),
-    enabled: open && !!jobApplicationId,
+    queryKey: queryKeys.coverLetter.detail(coverLetterId ?? ""),
+    queryFn: () => fetchCoverLetter(coverLetterId!),
+    enabled: open && !!coverLetterId,
   });
 
   const regenerateMutation = useMutation({
@@ -56,7 +56,7 @@ export default function CoverLetterDialog({
       // Regeneration runs in the background; the letter arrives via a realtime
       // event. Flip the detail to processing and close the dialog.
       queryClient.setQueryData(
-        queryKeys.coverLetter.detail(result.jobApplicationId),
+        queryKeys.coverLetter.detail(result.id),
         (old: CoverLetterDetail | undefined) =>
           old ? { ...old, status: "processing" as const } : old,
       );
@@ -89,9 +89,9 @@ export default function CoverLetterDialog({
   }
 
   function handleRegenerate() {
-    if (!jobApplicationId) return;
+    if (!coverLetterId) return;
     regenerateMutation.mutate({
-      jobApplicationId,
+      id: coverLetterId,
       editInstructions: editInstructions.trim() || undefined,
       ultraWrite,
     });

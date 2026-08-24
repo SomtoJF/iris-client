@@ -32,7 +32,7 @@ function getStatusTagConfig(status: CoverLetterStatus): {
   iconStyles: string;
 } {
   switch (status) {
-    case "applied":
+    case "ready":
       return {
         textStyles: "text-green-600",
         iconStyles: "bg-green-600 opacity-50",
@@ -47,11 +47,6 @@ function getStatusTagConfig(status: CoverLetterStatus): {
         textStyles: "text-red-500",
         iconStyles: "bg-red-500 opacity-50",
       };
-    case "cancelled":
-      return {
-        textStyles: "text-slate-400",
-        iconStyles: "bg-slate-400 opacity-50",
-      };
     default:
       return {
         textStyles: "text-muted-foreground",
@@ -61,12 +56,11 @@ function getStatusTagConfig(status: CoverLetterStatus): {
 }
 
 function statusLabel(status: CoverLetterStatus): string {
-  if (status === "applied") return "Ready";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function buildColumns(
-  onRetry: (jobApplicationId: string) => void,
+  onRetry: (id: string) => void,
   retryingId: string | null,
 ): (ColumnDef<CoverLetterListItem, unknown> & {
   shimmer?: () => React.ReactNode;
@@ -120,7 +114,7 @@ function buildColumns(
         const { iconStyles, textStyles } = getStatusTagConfig(
           row.original.status,
         );
-        const isRetrying = retryingId === row.original.jobApplicationId;
+        const isRetrying = retryingId === row.original.id;
         return (
           <div className="flex items-center gap-2">
             <span className={cn("w-3 h-3 rounded-full", iconStyles)} />
@@ -131,7 +125,7 @@ function buildColumns(
                 disabled={isRetrying}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRetry(row.original.jobApplicationId);
+                  onRetry(row.original.id);
                 }}
               >
                 {isRetrying ? (
@@ -189,7 +183,7 @@ export default function CoverLettersTab() {
   const total = data?.total ?? 0;
 
   // Patch a cover letter's status across every cached list page.
-  function patchStatus(jobApplicationId: string, status: CoverLetterStatus) {
+  function patchStatus(id: string, status: CoverLetterStatus) {
     queryClient.setQueriesData<FetchCoverLettersResponse>(
       { queryKey: queryKeys.coverLetter.lists() },
       (old) =>
@@ -197,9 +191,7 @@ export default function CoverLettersTab() {
           ? {
               ...old,
               data: old.data.map((cl) =>
-                cl.jobApplicationId === jobApplicationId
-                  ? { ...cl, status }
-                  : cl,
+                cl.id === id ? { ...cl, status } : cl,
               ),
             }
           : old,
@@ -210,18 +202,18 @@ export default function CoverLettersTab() {
   useEffect(() => {
     const onReady = addEventListener(
       "COVER_LETTER_READY",
-      (d: { jobApplicationId: string }) => {
-        patchStatus(d.jobApplicationId, "applied");
+      (d: { coverLetterId: string }) => {
+        patchStatus(d.coverLetterId, "ready");
         queryClient.invalidateQueries({
-          queryKey: queryKeys.coverLetter.detail(d.jobApplicationId),
+          queryKey: queryKeys.coverLetter.detail(d.coverLetterId),
         });
         toast.success("Cover letter ready");
       },
     );
     const onFailed = addEventListener(
       "COVER_LETTER_FAILED",
-      (d: { jobApplicationId: string }) => {
-        patchStatus(d.jobApplicationId, "failed");
+      (d: { coverLetterId: string }) => {
+        patchStatus(d.coverLetterId, "failed");
         toast.error("Cover letter generation failed");
       },
     );
@@ -232,14 +224,14 @@ export default function CoverLettersTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addEventListener, queryClient]);
 
-  async function handleRetry(jobApplicationId: string) {
-    setRetryingId(jobApplicationId);
-    patchStatus(jobApplicationId, "processing");
+  async function handleRetry(id: string) {
+    setRetryingId(id);
+    patchStatus(id, "processing");
     try {
-      await regenerateCoverLetter({ jobApplicationId });
+      await regenerateCoverLetter({ id });
       toast.success("Regeneration started");
     } catch (err) {
-      patchStatus(jobApplicationId, "failed");
+      patchStatus(id, "failed");
       toast.error(
         err instanceof Error ? err.message : "Failed to retry cover letter",
       );
@@ -263,9 +255,9 @@ export default function CoverLettersTab() {
       onPageChange: setPageIndex,
     },
     loading: isFetching,
-    // Only ready (applied) cover letters can be opened; processing/failed do nothing.
+    // Only ready cover letters can be opened; processing/failed do nothing.
     onRowClick: (row) => {
-      if (row.status === "applied") setViewId(row.jobApplicationId);
+      if (row.status === "ready") setViewId(row.id);
     },
   };
 
@@ -314,13 +306,13 @@ export default function CoverLettersTab() {
         onOpenChange={(o) => {
           if (!o) setViewId(null);
         }}
-        jobApplicationId={viewId}
+        coverLetterId={viewId}
       />
       <CreateCoverLetterDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         // Generation runs in the background; the new row shows as processing and
-        // opens once its COVER_LETTER_READY event flips it to applied.
+        // opens once its COVER_LETTER_READY event flips it to ready.
         onCreated={() => setPageIndex(0)}
       />
     </div>

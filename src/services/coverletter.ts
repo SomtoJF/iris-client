@@ -1,14 +1,15 @@
 import { apiFetch } from "./api";
-import type { JobApplication } from "./job";
+
+export type CoverLetterStatus = "processing" | "ready" | "failed";
 
 export interface CoverLetterListItem {
-  jobApplicationId: string;
+  id: string;
   companyName: string;
   jobTitle: string;
   jobDescription: string;
   url: string;
   resumeId: string;
-  status: JobApplication["status"];
+  status: CoverLetterStatus;
   createdAt: string;
 }
 
@@ -34,12 +35,12 @@ export interface CreateCoverLetterInput {
 // Generation runs in the background; the response only confirms it started.
 // The finished letter arrives later via a COVER_LETTER_READY realtime event.
 export interface CreateCoverLetterResponse {
-  jobApplicationId: string;
-  status: JobApplication["status"];
+  id: string;
+  status: CoverLetterStatus;
 }
 
 export interface RegenerateCoverLetterInput {
-  jobApplicationId: string;
+  id: string;
   editInstructions?: string;
   ultraWrite?: boolean;
 }
@@ -61,10 +62,8 @@ export async function fetchCoverLetters(
   return res.data;
 }
 
-export async function fetchCoverLetter(
-  jobApplicationId: string,
-): Promise<CoverLetterDetail> {
-  return apiFetch(`/coverletter/job-application/${jobApplicationId}`, {
+export async function fetchCoverLetter(id: string): Promise<CoverLetterDetail> {
+  return apiFetch(`/coverletter/${id}`, {
     method: "GET",
     fallbackError: "Failed to fetch cover letter",
   });
