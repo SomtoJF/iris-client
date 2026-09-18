@@ -124,6 +124,14 @@ function toFieldErrors(err: unknown): Array<{ message?: string } | undefined> {
   );
 }
 
+function RequiredAsterisk() {
+  return (
+    <span className="text-red-500" aria-hidden="true">
+      *
+    </span>
+  );
+}
+
 const STEP_FIELDS: Record<number, (keyof JobApplicationProfileFormValues)[]> = {
   1: ["firstName", "lastName", "email", "phone", "dateOfBirth", "gender"],
   2: ["address", "city", "state", "zip", "countryOfResidence"],
@@ -233,7 +241,8 @@ function ApplicationOnboardingForm({
         requiredErrors.noticePeriodDays = "Notice period is required";
       }
       if ((value.preferredWorkingArrangement ?? []).length === 0) {
-        requiredErrors.preferredWorkingArrangement = "Select at least one option";
+        requiredErrors.preferredWorkingArrangement =
+          "Select at least one option";
       }
       if ((value.languageProficiencies ?? []).length === 0) {
         requiredErrors.languageProficiencies = "Add at least one language";
@@ -244,8 +253,9 @@ function ApplicationOnboardingForm({
 
       if (Object.keys(requiredErrors).length > 0) {
         setStepErrors(requiredErrors);
-        const firstErrorField = (Object.keys(requiredErrors)[0] ??
-          null) as keyof JobApplicationProfileFormValues | null;
+        const firstErrorField = (Object.keys(requiredErrors)[0] ?? null) as
+          | keyof JobApplicationProfileFormValues
+          | null;
         if (firstErrorField) setFirstErrorFieldToFocus(firstErrorField);
         toast.error("Please complete the required fields.");
         return;
@@ -456,7 +466,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>First name</FieldTitle>
+                        <FieldTitle>
+                          First name
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -490,7 +503,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Last name</FieldTitle>
+                        <FieldTitle>
+                          Last name
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -523,7 +539,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Email</FieldTitle>
+                        <FieldTitle>
+                          Email
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           type="email"
                           value={field.state.value}
@@ -557,7 +576,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Phone</FieldTitle>
+                        <FieldTitle>
+                          Phone
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <PhoneInput
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -591,7 +613,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Date of birth</FieldTitle>
+                        <FieldTitle>
+                          Date of birth
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           type="date"
                           value={field.state.value}
@@ -624,7 +649,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Gender</FieldTitle>
+                        <FieldTitle>
+                          Gender
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Select
                           value={field.state.value}
                           onValueChange={(v) => field.handleChange(v)}
@@ -666,7 +694,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Address</FieldTitle>
+                        <FieldTitle>
+                          Address
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -697,7 +728,10 @@ function ApplicationOnboardingForm({
                           !!(stepErrors.city ?? field.state.meta.errors?.length)
                         }
                       >
-                        <FieldTitle>City</FieldTitle>
+                        <FieldTitle>
+                          City
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -729,7 +763,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>State / Province</FieldTitle>
+                        <FieldTitle>
+                          State / Province
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -760,7 +797,10 @@ function ApplicationOnboardingForm({
                           !!(stepErrors.zip ?? field.state.meta.errors?.length)
                         }
                       >
-                        <FieldTitle>ZIP / Postal code</FieldTitle>
+                        <FieldTitle>
+                          ZIP / Postal code
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -793,7 +833,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Country of residence</FieldTitle>
+                        <FieldTitle>
+                          Country of residence
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <CountryDropdown
                           key={field.state.value || "residence"}
                           defaultValue={field.state.value || undefined}
@@ -833,6 +876,7 @@ function ApplicationOnboardingForm({
                           <FieldTitle>
                             Preferred working arrangement (select all that
                             apply)
+                            <RequiredAsterisk />
                           </FieldTitle>
                           <div className="space-y-2">
                             {WORKING_ARRANGEMENT_OPTIONS.map((opt) => {
@@ -961,7 +1005,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Open to relocating?</FieldTitle>
+                        <FieldTitle>
+                          Open to relocating?
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <RadioGroup
                           value={
                             field.state.value === null
@@ -1029,7 +1076,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>Notice period (days)</FieldTitle>
+                        <FieldTitle>
+                          Notice period (days)
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           type="number"
                           min={0}
@@ -1074,7 +1124,10 @@ function ApplicationOnboardingForm({
                             )
                           }
                         >
-                          <FieldTitle>Countries of citizenship</FieldTitle>
+                          <FieldTitle>
+                            Countries of citizenship
+                            <RequiredAsterisk />
+                          </FieldTitle>
                           <div className="space-y-2">
                             {list.map((code: string, idx: number) => {
                               const country = getCountryByAlpha3(code);
@@ -1193,7 +1246,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>I am a veteran</FieldTitle>
+                        <FieldTitle>
+                          I am a veteran
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <RadioGroup
                           value={String(field.state.value)}
                           onValueChange={(v) =>
@@ -1251,7 +1307,10 @@ function ApplicationOnboardingForm({
                             )
                           }
                         >
-                          <FieldTitle>Languages</FieldTitle>
+                          <FieldTitle>
+                            Languages
+                            <RequiredAsterisk />
+                          </FieldTitle>
                           <div className="space-y-3">
                             {list.map((lp, idx) => (
                               <div
@@ -1259,7 +1318,10 @@ function ApplicationOnboardingForm({
                                 className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end"
                               >
                                 <div className="sm:col-span-2 space-y-2">
-                                  <FieldTitle>Language</FieldTitle>
+                                  <FieldTitle>
+                                    Language
+                                    <RequiredAsterisk />
+                                  </FieldTitle>
                                   <Input
                                     value={lp.language}
                                     onChange={(e) => {
@@ -1274,7 +1336,10 @@ function ApplicationOnboardingForm({
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <FieldTitle>Proficiency</FieldTitle>
+                                  <FieldTitle>
+                                    Proficiency
+                                    <RequiredAsterisk />
+                                  </FieldTitle>
                                   <ProficiencyPopover
                                     value={lp.proficiency}
                                     onChange={(v) => {
@@ -1346,7 +1411,10 @@ function ApplicationOnboardingForm({
                           )
                         }
                       >
-                        <FieldTitle>LinkedIn URL</FieldTitle>
+                        <FieldTitle>
+                          LinkedIn URL
+                          <RequiredAsterisk />
+                        </FieldTitle>
                         <Input
                           value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}

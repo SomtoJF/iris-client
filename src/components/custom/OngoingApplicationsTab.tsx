@@ -12,7 +12,6 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
-  ExternalLink,
   Eye,
   Link2Icon,
   Loader2,
