@@ -25,6 +25,7 @@ export interface JobApplication {
     | "cancelled"
     | "halted";
   hasApplicationData: boolean;
+  responseStatus: ResponseStatus;
   failureReason?: string;
   cancellationReason?: string;
   haltReason?: string;
@@ -32,6 +33,8 @@ export interface JobApplication {
   createdAt: string;
   updatedAt: string;
 }
+
+export type ResponseStatus = "none" | "rejected" | "interviewing" | "ghosted" | "offer" | "offer_accepted";
 
 export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
   return apiFetch("/jobs/apply", {
@@ -42,15 +45,34 @@ export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
   });
 }
 
-export async function fetchAllJobApplications(page: number, limit: number, search?: string, status?: JobApplication["status"]): Promise<FetchAllJobApplicationsResponse> {
+export async function fetchAllJobApplications(
+  page: number,
+  limit: number,
+  search?: string,
+  status?: JobApplication["status"],
+  responseStatus?: ResponseStatus,
+): Promise<FetchAllJobApplicationsResponse> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search) params.set("search", search);
   if (status) params.set("status", status);
+  if (responseStatus) params.set("response_status", responseStatus);
   const res = await apiFetch(`/jobs?${params}`, {
     method: "GET",
     fallbackError: "Failed to fetch job applications",
   });
   return res.data;
+}
+
+export async function patchJobApplication(
+  id: string,
+  data: { responseStatus?: ResponseStatus; resumeId?: string },
+): Promise<void> {
+  await apiFetch(`/jobs/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+    fallbackError: "Failed to update job application",
+  });
 }
 
 export async function retryJobApplication(id: string): Promise<void> {

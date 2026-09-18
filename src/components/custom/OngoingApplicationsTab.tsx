@@ -3,6 +3,8 @@ import {
   retryJobApplication,
   cancelJobApplication,
   deleteJobApplication,
+  patchJobApplication,
+  type ResponseStatus,
   type JobApplication,
   type FetchAllJobApplicationsResponse,
 } from "@/services/job";
@@ -12,6 +14,7 @@ import {
   AlertCircle,
   ExternalLink,
   Eye,
+  Link2Icon,
   Loader2,
   RotateCcw,
   Search,
@@ -62,6 +65,16 @@ dayjs.extend(relativeTime);
 const LIMIT = 10;
 
 type JobStatus = JobApplication["status"];
+type ResponseStatusFilter = ResponseStatus | "all";
+
+const ALL_RESPONSE_STATUSES: ResponseStatus[] = [
+  "none",
+  "ghosted",
+  "rejected",
+  "interviewing",
+  "offer",
+  "offer_accepted",
+];
 
 const ALL_STATUSES: JobStatus[] = [
   "processing",
@@ -119,6 +132,23 @@ function getStatusTagConfig(status: JobStatus): {
   }
 }
 
+function getResponseStatusStyles(status: ResponseStatus): string {
+  switch (status) {
+    case "rejected":
+      return "text-red-600";
+    case "interviewing":
+      return "text-orange-400";
+    case "ghosted":
+      return "text-slate-500";
+    case "offer":
+      return "text-green-600";
+    case "offer_accepted":
+      return "text-blue-600";
+    default:
+      return "text-muted-foreground";
+  }
+}
+
 function buildColumns(
   selectedIds: Set<string>,
   retryingIds: Set<string>,
@@ -129,6 +159,10 @@ function buildColumns(
   onCancelApplication: (id: string) => void,
   statusFilter: JobStatus | "all",
   onStatusFilterChange: (status: JobStatus | "all") => void,
+  responseStatusFilter: ResponseStatusFilter,
+  onResponseStatusFilterChange: (status: ResponseStatusFilter) => void,
+  updatingResponseStatusIds: Set<string>,
+  onResponseStatusChange: (id: string, status: ResponseStatus) => void,
 ): (ColumnDef<JobApplication, unknown> & {
   shimmer?: () => React.ReactNode;
   width?: string;
@@ -155,47 +189,32 @@ function buildColumns(
       accessorKey: "jobTitle",
       header: "Job Title",
       cell: ({ row }) => (
-        <div
-          className={cn(
-            "truncate text-black",
-            row.original.jobTitle.toLowerCase().startsWith("pending") &&
-              "bg-yellow-200",
-          )}
-          title={row.original.jobTitle}
-        >
-          {row.original.jobTitle}
+        <div>
+          <div className="flex items-center gap-0.5 ">
+            <a
+              className={cn(
+                "truncate text-black hover:text-blue-700",
+                row.original.jobTitle.toLowerCase().startsWith("pending") &&
+                  "bg-yellow-200",
+              )}
+              title={row.original.jobTitle}
+              href={row.original.url}
+              target="_blank"
+            >
+              {row.original.jobTitle}
+            </a>
+            <Link2Icon className="w-4 h-4 ml-1 text-slate-400" />
+          </div>
+          <span
+            className="truncate text-gray-700 text-xs font-semibold"
+            title={row.original.companyName}
+          >
+            {row.original.companyName}
+          </span>
         </div>
       ),
       shimmer: () => <Skeleton className="h-4 w-64" />,
       width: "300px",
-    },
-    {
-      accessorKey: "companyName",
-      header: "Company Name",
-      cell: ({ row }) => (
-        <div className="truncate text-black" title={row.original.companyName}>
-          {row.original.companyName}
-        </div>
-      ),
-      shimmer: () => <Skeleton className="h-4 w-64" />,
-      width: "200px",
-    },
-    {
-      accessorKey: "url",
-      header: "Link",
-      cell: ({ row }) => (
-        <a
-          href={row.original.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 cursor-pointer inline-flex items-center gap-2 max-w-full"
-        >
-          <span className="truncate">External Link</span>
-          <ExternalLink className="w-4 h-4 flex-shrink-0" />
-        </a>
-      ),
-      shimmer: () => <Skeleton className="h-4 w-64" />,
-      width: "200px",
     },
     {
       accessorKey: "status",
@@ -332,6 +351,77 @@ function buildColumns(
       width: "200px",
     },
     {
+      accessorKey: "responseStatus",
+      header: () => (
+        <Select
+          value={responseStatusFilter}
+          onValueChange={(value) =>
+            onResponseStatusFilterChange(value as ResponseStatusFilter)
+          }
+        >
+          <SelectTrigger
+            size="sm"
+            className={cn(
+              "h-7 border-none shadow-none px-0 gap-1 font-medium bg-transparent dark:bg-transparent",
+              responseStatusFilter !== "all" && "text-blue-500",
+            )}
+          >
+            <SelectValue placeholder="Response Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Response Status</SelectItem>
+            {ALL_RESPONSE_STATUSES.map((status) => (
+              <SelectItem
+                key={status}
+                value={status}
+                className={getResponseStatusStyles(status)}
+              >
+                {toTitleCase(status)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }) => {
+        const updating = updatingResponseStatusIds.has(row.original.id);
+        if (updating) {
+          return <Skeleton className="h-4 w-64" />;
+        }
+        return (
+          <Select
+            value={row.original.responseStatus}
+            disabled={updating}
+            onValueChange={(value) =>
+              onResponseStatusChange(row.original.id, value as ResponseStatus)
+            }
+          >
+            <SelectTrigger
+              size="sm"
+              className={cn(
+                "border-none shadow-none px-0 bg-transparent dark:bg-transparent",
+                getResponseStatusStyles(row.original.responseStatus),
+              )}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ALL_RESPONSE_STATUSES.map((status) => (
+                <SelectItem
+                  key={status}
+                  value={status}
+                  className={getResponseStatusStyles(status)}
+                >
+                  {toTitleCase(status)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
+      shimmer: () => <Skeleton className="h-4 w-64" />,
+      width: "200px",
+    },
+    {
       accessorKey: "createdAt",
       header: "Date Applied",
       cell: ({ row }) => {
@@ -353,6 +443,11 @@ export default function OngoingApplicationsTab() {
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<JobStatus | "all">("all");
+  const [responseStatusFilter, setResponseStatusFilter] =
+    useState<ResponseStatusFilter>("all");
+  const [updatingResponseStatusIds, setUpdatingResponseStatusIds] = useState<
+    Set<string>
+  >(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(
@@ -369,15 +464,18 @@ export default function OngoingApplicationsTab() {
   const queryClient = useQueryClient();
 
   const activeStatus = statusFilter === "all" ? undefined : statusFilter;
+  const activeResponseStatus =
+    responseStatusFilter === "all" ? undefined : responseStatusFilter;
 
   const queryKey = queryKeys.jobApplication.list({
     page: pageIndex + 1,
     limit: LIMIT,
     search: activeSearch || undefined,
     status: activeStatus,
+    responseStatus: activeResponseStatus,
   });
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isPending } = useQuery({
     queryKey,
     queryFn: () =>
       fetchAllJobApplications(
@@ -385,6 +483,7 @@ export default function OngoingApplicationsTab() {
         LIMIT,
         activeSearch || undefined,
         activeStatus,
+        activeResponseStatus,
       ),
   });
 
@@ -639,6 +738,53 @@ export default function OngoingApplicationsTab() {
     setPageIndex(0);
   }
 
+  function handleResponseStatusFilterChange(status: ResponseStatusFilter) {
+    setResponseStatusFilter(status);
+    setPageIndex(0);
+  }
+
+  async function handleResponseStatusChange(
+    id: string,
+    responseStatus: ResponseStatus,
+  ) {
+    const previous = jobApplications.find(
+      (job) => job.id === id,
+    )?.responseStatus;
+    if (!previous || previous === responseStatus) return;
+
+    setUpdatingResponseStatusIds((prev) => new Set(prev).add(id));
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.jobApplication.lists() },
+      (oldData: FetchAllJobApplicationsResponse | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: oldData.data.map((job) =>
+            job.id === id ? { ...job, responseStatus } : job,
+          ),
+        };
+      },
+    );
+
+    try {
+      await patchJobApplication(id, { responseStatus });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
+    } catch {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.jobApplication.lists(),
+      });
+      toast.error("Failed to update response status");
+    } finally {
+      setUpdatingResponseStatusIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
   function handleSearch() {
     setActiveSearch(searchInput);
     setPageIndex(0);
@@ -705,6 +851,10 @@ export default function OngoingApplicationsTab() {
     handleCancelApplication,
     statusFilter,
     handleStatusFilterChange,
+    responseStatusFilter,
+    handleResponseStatusFilterChange,
+    updatingResponseStatusIds,
+    handleResponseStatusChange,
   );
 
   const tableConfig: TableConfig<JobApplication> = {
@@ -716,7 +866,7 @@ export default function OngoingApplicationsTab() {
       total,
       onPageChange: setPageIndex,
     },
-    loading: isFetching,
+    loading: isPending,
   };
 
   return (
@@ -867,5 +1017,8 @@ function DeleteApplicationsDialog({
 }
 
 function toTitleCase(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  return str
+    .split("_")
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
 }
