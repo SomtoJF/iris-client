@@ -532,6 +532,31 @@ export default function OngoingApplicationsTab() {
       },
     );
 
+    const applicationDetailsUpdatedHandler = addEventListener(
+      "APPLICATION_DETAILS_UPDATED",
+      (data) => {
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id
+                  ? {
+                      ...j,
+                      jobTitle: data.jobTitle,
+                      companyName: data.companyName,
+                      updatedAt: data.updatedAt,
+                    }
+                  : j,
+              ),
+            };
+          },
+        );
+      },
+    );
+
     const applicationHaltedHandler = addEventListener(
       "APPLICATION_HALTED",
       (data) => {
@@ -601,6 +626,7 @@ export default function OngoingApplicationsTab() {
     return () => {
       applicationSuccessHandler();
       applicationFailedHandler();
+      applicationDetailsUpdatedHandler();
       applicationHaltedHandler();
       userActionRequiredHandler();
       applicationCancelledHandler();
