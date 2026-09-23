@@ -18,6 +18,7 @@ export interface JobApplication {
   jobTitle: string;
   companyName: string;
   status:
+    | "queued"
     | "processing"
     | "applied"
     | "failed"

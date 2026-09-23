@@ -547,6 +547,7 @@ export default function OngoingApplicationsTab() {
                       ...j,
                       jobTitle: data.jobTitle,
                       companyName: data.companyName,
+                      ...(data.status ? { status: data.status } : {}),
                       updatedAt: data.updatedAt,
                     }
                   : j,
