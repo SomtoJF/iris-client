@@ -25,6 +25,7 @@ export interface JobApplication {
     | "cancelled"
     | "halted";
   hasApplicationData: boolean;
+  appliedUsingExtension: boolean;
   responseStatus: ResponseStatus;
   failureReason?: string;
   cancellationReason?: string;
