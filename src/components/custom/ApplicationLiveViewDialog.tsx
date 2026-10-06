@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { fetchApplicationLiveView } from "@/services/job";
 import {
   Dialog,
@@ -37,6 +40,7 @@ export default function ApplicationLiveViewDialog({
   jobApplicationId,
 }: ApplicationLiveViewDialogProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [viewerStatus, setViewerStatus] = useState<{
     url?: string;
     state: LiveViewState;
@@ -126,18 +130,42 @@ export default function ApplicationLiveViewDialog({
   const statusText: Record<LiveViewState, string> = {
     connecting: "Connecting to the browser…",
     playing: "Browser frames are rendering. View-only during automation.",
-    paused: "The browser is paused. Use the structured action form when prompted.",
+    paused:
+      "The browser is paused. Use the structured action form when prompted.",
     connected: "Connected; waiting for browser frames.",
     diagnostic: "The browser connection did not start rendering.",
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(96vw,1100px)] max-w-none">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setIsMaximized(false);
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent
+        className={cn(
+          "max-w-none",
+          isMaximized
+            ? "h-screen w-screen grid-rows-[auto_auto_1fr] rounded-none sm:max-w-none"
+            : "w-[min(96vw,1100px)]",
+        )}
+      >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-2 right-10"
+          onClick={() => setIsMaximized((v) => !v)}
+          aria-label={isMaximized ? "Restore size" : "Maximize"}
+        >
+          {isMaximized ? <Minimize2 /> : <Maximize2 />}
+        </Button>
         <DialogHeader>
           <DialogTitle>Application browser</DialogTitle>
           <DialogDescription>
-            Read-only view. Interactions are disabled while automation is running.
+            Read-only view. Interactions are disabled while automation is
+            running.
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground" role="status">
@@ -154,7 +182,10 @@ export default function ApplicationLiveViewDialog({
             src={readOnlyURL}
             allow="autoplay; clipboard-read; clipboard-write"
             allowFullScreen
-            className="h-[70vh] w-full rounded-md border bg-black pointer-events-none"
+            className={cn(
+              "w-full rounded-md border bg-black pointer-events-none",
+              isMaximized ? "h-full min-h-0" : "h-[70vh]",
+            )}
           />
         )}
       </DialogContent>
