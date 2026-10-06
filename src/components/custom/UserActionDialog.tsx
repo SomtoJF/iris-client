@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import {
   fetchUserAction,
-  sendWorkflowSignal,
+  submitUserAction,
   type UserActionLayoutItem,
   type UserActionResultItem,
 } from "@/services/job";
@@ -126,11 +126,7 @@ export default function UserActionDialog({
 
     setSubmitting(true);
     try {
-      await sendWorkflowSignal(
-        userAction.workflow_id,
-        userAction.signal_name,
-        payload,
-      );
+      await submitUserAction(jobApplicationId!, userAction.id, payload);
       toast.success("Action submitted");
       queryClient.invalidateQueries({
         queryKey: queryKeys.jobApplication.lists(),

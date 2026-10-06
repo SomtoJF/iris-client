@@ -106,6 +106,7 @@ export interface UserActionResponse {
   layout: UserActionLayoutItem[];
   workflow_id: string;
   signal_name: string;
+  durable_pause: boolean;
 }
 
 export interface UserActionResultItem {
@@ -118,6 +119,27 @@ export async function fetchUserAction(jobApplicationId: string): Promise<UserAct
     method: "GET",
     fallbackError: "Failed to fetch user action",
   });
+}
+
+export async function submitUserAction(
+  jobApplicationId: string,
+  userActionId: number,
+  values: UserActionResultItem[],
+): Promise<void> {
+  await apiFetch(`/jobs/${jobApplicationId}/user-action/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_action_id: userActionId, values }),
+    fallbackError: "Failed to submit action",
+  });
+}
+
+export async function fetchApplicationLiveView(jobApplicationId: string): Promise<{ url: string }> {
+  const response = await apiFetch(`/jobs/${jobApplicationId}/live-view`, {
+    method: "GET",
+    fallbackError: "Failed to fetch browser view",
+  });
+  return response.data;
 }
 
 export interface JobApplicationQuestion {
