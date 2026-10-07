@@ -1,11 +1,16 @@
 import "./App.css";
 import Home from "./pages/page";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { RealtimeEventProvider } from "./context/RealTimeEventContext";
 import Login from "./pages/login/page";
 import Signup from "./pages/signup/page";
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { ApiError } from "./services/api";
 import { useUserStore } from "./zustand/userstore";
 import { queryKeys } from "./querykeyfactory";
@@ -25,11 +30,13 @@ import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 import { TooltipProvider } from "./components/ui/tooltip";
 import DashboardLayout from "./layout/DashboardLayout";
 import NotFound from "./pages/not-found/page";
+import { SidebarProvider } from "./components/ui/sidebar";
 
 // Session expired: clear auth state so ProtectedLayout redirects to /login,
 // and drop every other cached query so no stale data survives the logout.
 function handleAuthError(error: unknown) {
-  if (!(error instanceof ApiError) || error.status !== 401 || error.ignore401) return;
+  if (!(error instanceof ApiError) || error.status !== 401 || error.ignore401)
+    return;
   useUserStore.getState().clearUser();
   queryClient.setQueryData(queryKeys.user.current, null);
   const userKey = JSON.stringify(queryKeys.user.current);
@@ -68,26 +75,37 @@ function App() {
               />
 
               <Route element={<ProtectedLayout />}>
-                {/* Dashboard */}
-                <Route element={<DashboardLayout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                </Route>
+                <Route
+                  element={
+                    <SidebarProvider>
+                      <Outlet />
+                    </SidebarProvider>
+                  }
+                >
+                  {/* Dashboard */}
+                  <Route element={<DashboardLayout />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                  </Route>
 
-                {/* Feedback */}
-                <Route element={<FeedbackLayout />}>
-                  <Route path="/feedback" element={<FeedbackPage />} />
-                  <Route path="/feedback/new" element={<NewFeedbackPage />} />
-                  <Route path="/feedback/:id" element={<FeedbackIssuePage />} />
-                </Route>
+                  {/* Feedback */}
+                  <Route element={<FeedbackLayout />}>
+                    <Route path="/feedback" element={<FeedbackPage />} />
+                    <Route path="/feedback/new" element={<NewFeedbackPage />} />
+                    <Route
+                      path="/feedback/:id"
+                      element={<FeedbackIssuePage />}
+                    />
+                  </Route>
 
-                {/* Settings */}
-                <Route path="/settings" element={<SettingsLayout />}>
-                  <Route
-                    path="application-profile"
-                    element={<ApplicationProfile />}
-                  />
-                  <Route path="account" element={<Account />} />
-                  <Route path="admin" element={<AdminPage />} />
+                  {/* Settings */}
+                  <Route path="/settings" element={<SettingsLayout />}>
+                    <Route
+                      path="application-profile"
+                      element={<ApplicationProfile />}
+                    />
+                    <Route path="account" element={<Account />} />
+                    <Route path="admin" element={<AdminPage />} />
+                  </Route>
                 </Route>
               </Route>
 
