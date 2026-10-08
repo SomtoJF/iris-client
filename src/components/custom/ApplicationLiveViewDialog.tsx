@@ -53,7 +53,7 @@ export default function ApplicationLiveViewDialog({
     retry: false,
     refetchInterval: open ? 5000 : false,
   });
-  const url = query.isSuccess ? query.data.url : undefined;
+  const url = query.data?.url;
   const readOnlyURL = url
     ? (() => {
         const liveViewURL = new URL(url);

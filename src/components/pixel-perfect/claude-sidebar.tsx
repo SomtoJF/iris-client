@@ -95,6 +95,8 @@ export default function ClaudeSidebar() {
   return (
     <div className="relative flex h-full min-h-[520px]">
       <SidebarProvider
+        open={!collapsed}
+        onOpenChange={(open) => setCollapsed(!open)}
         defaultOpen
         className="min-h-0! h-full w-fit"
         style={{ "--sidebar-width": EXPANDED } as React.CSSProperties}
