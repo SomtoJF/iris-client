@@ -15,6 +15,7 @@ import {
   Eye,
   Link2Icon,
   Loader2,
+  MonitorPlay,
   RotateCcw,
   Search,
   ShieldAlert,
@@ -41,6 +42,7 @@ import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import UserActionDialog from "./UserActionDialog";
+import ApplicationLiveViewDialog from "./ApplicationLiveViewDialog";
 import ApplicationDataDialog from "./ApplicationDataDialog";
 import CancelApplicationDialog from "./CancelApplicationDialog";
 import {
@@ -155,6 +157,7 @@ function buildColumns(
   onRetry: (id: string) => void,
   onTakeAction: (id: string) => void,
   onViewApplicationData: (id: string) => void,
+  onViewLiveView: (id: string) => void,
   onCancelApplication: (id: string) => void,
   statusFilter: JobStatus | "all",
   onStatusFilterChange: (status: JobStatus | "all") => void,
@@ -310,14 +313,24 @@ function buildColumns(
               )}
 
             {row.original.status === "processing" && (
-              <button
-                className="ml-2 text-xs items-center flex no-wrap text-red-500 hover:text-red-600 cursor-pointer disabled:opacity-50"
-                disabled={isRetrying}
-                onClick={() => onCancelApplication(row.original.id)}
-              >
-                <XCircle className="w-3 h-3 mr-1" />
-                <span>Cancel</span>
-              </button>
+              <>
+                <button
+                  className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
+                  disabled={isRetrying}
+                  onClick={() => onViewLiveView(row.original.id)}
+                >
+                  <MonitorPlay className="w-3 h-3 mr-1" />
+                  <span>Live View</span>
+                </button>
+                <button
+                  className="ml-2 text-xs items-center flex no-wrap text-red-500 hover:text-red-600 cursor-pointer disabled:opacity-50"
+                  disabled={isRetrying}
+                  onClick={() => onCancelApplication(row.original.id)}
+                >
+                  <XCircle className="w-3 h-3 mr-1" />
+                  <span>Cancel</span>
+                </button>
+              </>
             )}
 
             {isSelectableStatus(row.original.status) && (
@@ -453,6 +466,7 @@ export default function OngoingApplicationsTab() {
     null,
   );
   const [viewDataJobId, setViewDataJobId] = useState<string | null>(null);
+  const [liveViewJobId, setLiveViewJobId] = useState<string | null>(null);
   const [cancelDialogJobId, setCancelDialogJobId] = useState<string | null>(
     null,
   );
@@ -532,6 +546,32 @@ export default function OngoingApplicationsTab() {
       },
     );
 
+    const applicationDetailsUpdatedHandler = addEventListener(
+      "APPLICATION_DETAILS_UPDATED",
+      (data) => {
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.jobApplication.lists() },
+          (oldData: FetchAllJobApplicationsResponse | undefined) => {
+            if (!oldData) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.map((j) =>
+                j.id === data.id
+                  ? {
+                      ...j,
+                      jobTitle: data.jobTitle,
+                      companyName: data.companyName,
+                      ...(data.status ? { status: data.status } : {}),
+                      updatedAt: data.updatedAt,
+                    }
+                  : j,
+              ),
+            };
+          },
+        );
+      },
+    );
+
     const applicationHaltedHandler = addEventListener(
       "APPLICATION_HALTED",
       (data) => {
@@ -601,6 +641,7 @@ export default function OngoingApplicationsTab() {
     return () => {
       applicationSuccessHandler();
       applicationFailedHandler();
+      applicationDetailsUpdatedHandler();
       applicationHaltedHandler();
       userActionRequiredHandler();
       applicationCancelledHandler();
@@ -847,6 +888,7 @@ export default function OngoingApplicationsTab() {
     handleRetry,
     handleTakeAction,
     handleViewApplicationData,
+    (id) => setLiveViewJobId(id),
     handleCancelApplication,
     statusFilter,
     handleStatusFilterChange,
@@ -943,6 +985,13 @@ export default function OngoingApplicationsTab() {
           if (!o) setViewDataJobId(null);
         }}
         jobApplicationId={viewDataJobId}
+      />
+      <ApplicationLiveViewDialog
+        open={!!liveViewJobId}
+        onOpenChange={(o) => {
+          if (!o) setLiveViewJobId(null);
+        }}
+        jobApplicationId={liveViewJobId}
       />
       <CancelApplicationDialog
         open={!!cancelDialogJobId}
