@@ -189,7 +189,7 @@ function buildColumns(
     },
     {
       accessorKey: "jobTitle",
-      header: "Job Title",
+      header: "Job Title & Company",
       cell: ({ row }) => (
         <div>
           <div className="flex items-center gap-0.5 ">
@@ -356,6 +356,15 @@ function buildColumns(
                 <span>Take Action</span>
               </button>
             )}
+
+            {row.original.appliedUsingExtension ? (
+              <span
+                className="text-muted-foreground px-1 py-0.5 ml-1 bg-muted border rounded-sm  text-xs text-[10px] cursor-default"
+                title="Applied using extension"
+              >
+                Ext
+              </span>
+            ) : null}
           </div>
         );
       },
