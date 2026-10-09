@@ -30,9 +30,9 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
   if (host === "indeed.com" || host.endsWith(".indeed.com")) {
     return "Indeed job URLs are not supported. Try looking up the job on another site.";
   }
-  if (!isGreenhouseJobUrl(urlString)) {
-    return "Non-Greenhouse job URLs are temporarily disabled. Apply using the extension.";
-  }
+  // if (!isGreenhouseJobUrl(urlString)) {
+  //   return "Non-Greenhouse job URLs are temporarily disabled. Apply using the extension.";
+  // }
   if (
     host === "seek.com.au" ||
     host.endsWith(".seek.com.au") ||
@@ -55,16 +55,16 @@ function blockedCustomJobUrlMessage(urlString: string): string | null {
   return null;
 }
 
-function isGreenhouseJobUrl(url: string): boolean {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
-    return (
-      host === "job-boards.greenhouse.io" || host === "boards.greenhouse.io"
-    );
-  } catch {
-    return false;
-  }
-}
+// function isGreenhouseJobUrl(url: string): boolean {
+//   try {
+//     const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+//     return (
+//       host === "job-boards.greenhouse.io" || host === "boards.greenhouse.io"
+//     );
+//   } catch {
+//     return false;
+//   }
+// }
 
 interface CustomJobDialogProps {
   open: boolean;
