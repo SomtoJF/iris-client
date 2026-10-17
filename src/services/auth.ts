@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import z from "zod";
+import { trackFernoEvent } from "@/lib/ferno";
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -14,23 +15,27 @@ export const signupSchema = z.object({
 });
 
 export async function login(data: z.infer<typeof loginSchema>) {
-  return apiFetch("/login", {
+  const response = await apiFetch("/login", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
     fallbackError: "Failed to login",
     ignore401: true,
   });
+  trackFernoEvent("signed_in");
+  return response;
 }
 
 export async function signup(data: z.infer<typeof signupSchema>) {
-  return apiFetch("/signup", {
+  const response = await apiFetch("/signup", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
     fallbackError: "Failed to signup",
     ignore401: true,
   });
+  trackFernoEvent("signed_up");
+  return response;
 }
 
 export interface User {
@@ -65,11 +70,13 @@ export async function resetPassword(data: { password: string; newPassword: strin
 }
 
 export async function logout() {
-  return apiFetch("/logout", {
+  const response = await apiFetch("/logout", {
     method: "POST",
     fallbackError: "Failed to logout",
     ignore401: true,
   });
+  trackFernoEvent("logged_out");
+  return response;
 }
 
 export async function getCurrentUser(): Promise<User> {
