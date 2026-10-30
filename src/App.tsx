@@ -31,6 +31,7 @@ import FeedbackIssuePage from "./pages/feedback/issue/[id]/page";
 import { TooltipProvider } from "./components/ui/tooltip";
 import DashboardLayout from "./layout/DashboardLayout";
 import NotFound from "./pages/not-found/page";
+import AnalyticsPage from "./pages/analytics/page";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { trackFernoPage } from "./lib/ferno";
 
@@ -96,6 +97,7 @@ function App() {
                   {/* Dashboard */}
                   <Route element={<DashboardLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
                   </Route>
 
                   {/* Feedback */}
