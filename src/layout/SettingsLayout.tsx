@@ -14,6 +14,10 @@ const settingsSidebarItems: SettingsSidebarItem[] = [
     path: "/settings/application-profile",
     label: "Application Profile",
   },
+  {
+    path: "/settings/resumes",
+    label: "Resumes",
+  },
 ];
 
 export default function SettingsLayout() {

@@ -16,6 +16,8 @@ import { ApiError } from "./services/api";
 import { useUserStore } from "./zustand/userstore";
 import { queryKeys } from "./querykeyfactory";
 import Dashboard from "./pages/dashboard/page";
+import JobSearchPage from "./pages/job-search/page";
+import ApplicationsPage from "./pages/applications/page";
 import { ProtectedLayout } from "./layout/ProtectedLayout";
 import { AuthLayout } from "./layout/AuthLayout";
 import ResumeOnboardingPage from "./pages/onboarding/resume/page";
@@ -24,6 +26,7 @@ import SettingsLayout from "./layout/SettingsLayout";
 import ApplicationProfile from "./pages/settings/application-profile/ApplicationProfile";
 import Account from "./pages/settings/account/Account";
 import AdminPage from "./pages/settings/admin/page";
+import Resumes from "./pages/settings/resumes/Resumes";
 import FeedbackPage from "./pages/feedback/page";
 import FeedbackLayout from "./layout/FeedbackLayout";
 import NewFeedbackPage from "./pages/feedback/new/page";
@@ -97,6 +100,8 @@ function App() {
                   {/* Dashboard */}
                   <Route element={<DashboardLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/job-search" element={<JobSearchPage />} />
+                    <Route path="/applications" element={<ApplicationsPage />} />
                     <Route path="/analytics" element={<AnalyticsPage />} />
                   </Route>
 
@@ -117,6 +122,7 @@ function App() {
                       element={<ApplicationProfile />}
                     />
                     <Route path="account" element={<Account />} />
+                    <Route path="resumes" element={<Resumes />} />
                     <Route path="admin" element={<AdminPage />} />
                   </Route>
                 </Route>

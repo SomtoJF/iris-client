@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/zustand/userstore";
@@ -12,7 +11,13 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ChartColumn, LogOut, SettingsIcon } from "lucide-react";
+import {
+  ChartColumn,
+  LogOut,
+  SettingsIcon,
+  Search,
+  LayoutDashboard,
+} from "lucide-react";
 import { ChromeIcon } from "../custom/chrome-icon";
 import { logout } from "@/services/auth";
 import { ApiError } from "@/services/api";
@@ -21,8 +26,8 @@ import { toast } from "sonner";
 
 const EASE = "cubic-bezier(0.165,0.85,0.45,1)";
 const DURATION = 300;
-const EXPANDED = "18rem";
-const COLLAPSED = "3.3rem";
+export const SIDEBAR_EXPANDED_WIDTH = "18rem";
+export const SIDEBAR_COLLAPSED_WIDTH = "3.3rem";
 
 type NavItem = {
   label: string;
@@ -33,8 +38,13 @@ type NavItem = {
   execute?: () => void;
 };
 
-export default function ClaudeSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export default function ClaudeSidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -66,10 +76,16 @@ export default function ClaudeSidebar() {
 
   const navItems: NavItem[] = [
     {
-      label: "Applications",
-      icon: <ProjectsIcon />,
+      label: "Overview",
+      icon: <LayoutDashboard className="w-3 h-3" />,
       href: "/dashboard",
     },
+    {
+      label: "Job Search",
+      icon: <Search className="w-3 h-3" />,
+      href: "/job-search",
+    },
+    { label: "Applications", icon: <ProjectsIcon />, href: "/applications" },
     {
       label: "Analytics",
       icon: <ChartColumn className="w-3 h-3" />,
@@ -96,15 +112,18 @@ export default function ClaudeSidebar() {
     <div className="relative flex h-full min-h-[520px]">
       <SidebarProvider
         open={!collapsed}
-        onOpenChange={(open) => setCollapsed(!open)}
-        defaultOpen
+        onOpenChange={(open) => {
+          if (open === collapsed) onToggle();
+        }}
         className="min-h-0! h-full w-fit"
-        style={{ "--sidebar-width": EXPANDED } as React.CSSProperties}
+        style={
+          { "--sidebar-width": SIDEBAR_EXPANDED_WIDTH } as React.CSSProperties
+        }
       >
         <div
           className="shrink-0 overflow-hidden"
           style={{
-            width: collapsed ? COLLAPSED : EXPANDED,
+            width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH,
             transition: `width ${DURATION}ms ${EASE}`,
           }}
         >
@@ -132,7 +151,7 @@ export default function ClaudeSidebar() {
                 type="button"
                 aria-label={collapsed ? "Open sidebar" : "Close sidebar"}
                 title={collapsed ? "Open sidebar" : "Close sidebar"}
-                onClick={() => setCollapsed((c) => !c)}
+                onClick={onToggle}
                 className="absolute right-2 top-2 z-10 grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <PanelIcon />
