@@ -7,6 +7,7 @@ export interface CoverLetterListItem {
   companyName: string;
   jobTitle: string;
   jobDescription: string;
+  coverLetterPreview: string;
   url: string;
   resumeId: string;
   status: CoverLetterStatus;
@@ -20,7 +21,8 @@ export interface FetchCoverLettersResponse {
   limit: number;
 }
 
-export interface CoverLetterDetail extends CoverLetterListItem {
+export interface CoverLetterDetail
+  extends Omit<CoverLetterListItem, "coverLetterPreview"> {
   coverLetter: string;
 }
 

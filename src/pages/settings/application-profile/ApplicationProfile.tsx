@@ -263,7 +263,7 @@ function ProfileForm({
   });
 
   return (
-    <div className="mx-auto h-fit w-full max-w-2xl">
+    <div className="h-fit w-full max-w-2xl">
       <header className="mb-6 space-y-2">
         <h1 className="text-xl font-semibold">Application Profile</h1>
         <p className="text-sm text-muted-foreground">
