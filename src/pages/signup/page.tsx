@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type z from "zod";
+import { submitTrackedForm, trackAuthForm } from "@/lib/ferno";
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -17,6 +18,11 @@ export default function Signup() {
   usePageTitle("Create Account");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const fernoFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (fernoFormRef.current) trackAuthForm(fernoFormRef.current, "signed_up");
+  }, []);
 
   const {
     register,
@@ -28,6 +34,7 @@ export default function Signup() {
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
+    if (fernoFormRef.current) submitTrackedForm(fernoFormRef.current);
     try {
       await signup(data);
       toast.success("Account created successfully");
@@ -41,6 +48,15 @@ export default function Signup() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
+      <form
+        ref={fernoFormRef}
+        action="/__ferno-form-bridge"
+        method="post"
+        target="ferno-signup-bridge"
+        className="hidden"
+        aria-hidden="true"
+      />
+      <iframe name="ferno-signup-bridge" title="" className="hidden" />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center text-2xl">

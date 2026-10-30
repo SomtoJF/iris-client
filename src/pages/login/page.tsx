@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type z from "zod";
 import { usePageTitle } from "@/hooks/page-title";
+import { submitTrackedForm, trackAuthForm } from "@/lib/ferno";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -17,6 +18,11 @@ export default function Login() {
   usePageTitle("Sign In");
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const fernoFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (fernoFormRef.current) trackAuthForm(fernoFormRef.current, "signed_in");
+  }, []);
 
   const {
     register,
@@ -28,10 +34,11 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
+    if (fernoFormRef.current) submitTrackedForm(fernoFormRef.current);
     try {
       await login(data);
       toast.success("Login successful");
-      navigate("/dashboard");
+      navigate("/dashboard?referrer=authentication");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to login");
     } finally {
@@ -41,6 +48,15 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
+      <form
+        ref={fernoFormRef}
+        action="/__ferno-form-bridge"
+        method="post"
+        target="ferno-login-bridge"
+        className="hidden"
+        aria-hidden="true"
+      />
+      <iframe name="ferno-login-bridge" title="" className="hidden" />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center text-2xl">

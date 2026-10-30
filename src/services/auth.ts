@@ -1,6 +1,6 @@
 import { apiFetch } from "./api";
 import z from "zod";
-import { trackFernoEvent } from "@/lib/ferno";
+import { resetFerno, trackFernoEvent } from "@/lib/ferno";
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -22,7 +22,6 @@ export async function login(data: z.infer<typeof loginSchema>) {
     fallbackError: "Failed to login",
     ignore401: true,
   });
-  trackFernoEvent("signed_in");
   return response;
 }
 
@@ -34,7 +33,6 @@ export async function signup(data: z.infer<typeof signupSchema>) {
     fallbackError: "Failed to signup",
     ignore401: true,
   });
-  trackFernoEvent("signed_up");
   return response;
 }
 
@@ -76,6 +74,7 @@ export async function logout() {
     ignore401: true,
   });
   trackFernoEvent("logged_out");
+  resetFerno();
   return response;
 }
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { applyToJob, type jobApplicationSchema } from "@/services/job";
 import { uploadResume } from "@/services/resume";
 import { Send, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import z from "zod";
 import { toast } from "@/hooks/toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,8 @@ import { useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
 import { usePageTitle } from "@/hooks/page-title";
+import { identifyFernoUser } from "@/lib/ferno";
+import { useUserStore } from "@/zustand/userstore";
 
 const TAB_VALUES = [
   "search-jobs",
@@ -33,12 +35,22 @@ function tabFromSearchParams(searchParams: URLSearchParams): TabValue {
 export default function Dashboard() {
   usePageTitle("Dashboard");
   const [searchParams, setSearchParams] = useSearchParams();
+  const user = useUserStore((state) => state.user);
   const activeTab = tabFromSearchParams(searchParams);
   const [isCustomJobDialogOpen, setIsCustomJobDialogOpen] = useState(false);
   const [isResumeUploadDialogOpen, setIsResumeUploadDialogOpen] =
     useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get("referrer") !== "authentication" || !user) return;
+    identifyFernoUser(user.id, {
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+    });
+  }, [searchParams, user]);
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });

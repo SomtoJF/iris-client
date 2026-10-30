@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ChromeIcon } from "@/components/custom/chrome-icon";
+import { resetFerno } from "@/lib/ferno";
 
 const CHROME_EXTENSION_URL =
   "https://chromewebstore.google.com/detail/iris/gkafmplebnbdnnbdafgfcnejfmaehhoj?utm_source=app";
@@ -33,6 +34,7 @@ export default function Navbar() {
         toast.error(err instanceof Error ? err.message : "Failed to logout");
         return;
       }
+      resetFerno();
     }
     clearUser();
     queryClient.setQueryData(queryKeys.user.current, null);

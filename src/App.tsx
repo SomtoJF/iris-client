@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import "./App.css";
 import Home from "./pages/page";
-import { BrowserRouter, Outlet, Route, Routes } from "react-router";
+import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { RealtimeEventProvider } from "./context/RealTimeEventContext";
 import Login from "./pages/login/page";
@@ -31,6 +32,15 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import DashboardLayout from "./layout/DashboardLayout";
 import NotFound from "./pages/not-found/page";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { trackFernoPage } from "./lib/ferno";
+
+function FernoRouteTracker() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    trackFernoPage(`${pathname}${search}`);
+  }, [pathname, search]);
+  return null;
+}
 
 // Session expired: clear auth state so ProtectedLayout redirects to /login,
 // and drop every other cached query so no stale data survives the logout.
@@ -57,6 +67,7 @@ function App() {
         <RealtimeEventProvider>
           <TooltipProvider>
             <Toaster />
+            <FernoRouteTracker />
             <Routes>
               <Route path="/" element={<Home />} />
 
