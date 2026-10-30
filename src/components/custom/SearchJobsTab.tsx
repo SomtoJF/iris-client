@@ -5,17 +5,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { countries } from "country-data-list";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { History, Loader2, Search } from "lucide-react";
+import { ChevronDown, History, Loader2, Search } from "lucide-react";
 import { useSearchParams } from "react-router";
 
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import type { Country } from "@/components/ui/country-dropdown";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -29,9 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/toast";
 import { queryKeys } from "@/querykeyfactory";
 import { applyToJob } from "@/services/job";
+import { fetchResumes, type Resume } from "@/services/resume";
 import {
   fetchJobSearchHistory,
   searchJobs,
@@ -90,29 +88,21 @@ function countryNameFromAlpha2(alpha2: string): string {
   return c?.name ?? alpha2;
 }
 
-function isGreenhouseJobUrl(url: string): boolean {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
-    return (
-      host === "job-boards.greenhouse.io" || host === "boards.greenhouse.io"
-    );
-  } catch {
-    return false;
-  }
-}
-
 function JobResultRow({
   job,
   applyingUrl,
+  selected,
+  onToggleSelected,
   onApply,
 }: {
   job: DiscoveredJob;
   applyingUrl: string | null;
+  selected: boolean;
+  onToggleSelected: (url: string) => void;
   onApply: (url: string) => void;
 }) {
   const pending = applyingUrl === job.url;
-  const canAutoApply = isGreenhouseJobUrl(job.url);
-  const disabled = job.applied || pending || !canAutoApply;
+  const disabled = job.applied || pending;
 
   const datePostedLabel = useMemo(() => {
     if (!job.datePosted) return null;
@@ -134,6 +124,13 @@ function JobResultRow({
         aria-label={`${job.title} at ${job.companyName}`}
         className="absolute inset-0"
       />
+      <div className="relative z-10 shrink-0 pt-1">
+        <Checkbox
+          aria-label={`Select ${job.title} at ${job.companyName}`}
+          checked={selected}
+          onCheckedChange={() => onToggleSelected(job.url)}
+        />
+      </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="truncate font-semibold text-foreground transition-colors group-hover:text-purple-600">
@@ -151,36 +148,20 @@ function JobResultRow({
       </div>
 
       <div className="relative z-10 shrink-0 pt-0.5">
-        {canAutoApply || job.applied ? (
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            onClick={() => onApply(job.url)}
-          >
-            {job.applied ? (
-              "Applied"
-            ) : pending ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              "Apply now"
-            )}
-          </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <Button type="button" size="sm" disabled>
-                  Apply now
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={6}>
-              Auto-apply to non-Greenhouse jobs temporarily disabled. Apply
-              using the extension instead.
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <Button
+          type="button"
+          size="sm"
+          disabled={disabled}
+          onClick={() => onApply(job.url)}
+        >
+          {job.applied ? (
+            "Applied"
+          ) : pending ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            "Apply now"
+          )}
+        </Button>
       </div>
     </div>
   );
@@ -223,6 +204,79 @@ function HistoryEntryRow({
   );
 }
 
+function BulkApplyPopover({
+  selectedCount,
+  resumes,
+  selectedResumeId,
+  onResumeChange,
+  isApplying,
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  selectedCount: number;
+  resumes: Resume[];
+  selectedResumeId: string;
+  onResumeChange: (id: string) => void;
+  isApplying: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <Button type="button">
+          Apply to ({selectedCount}) jobs{" "}
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" side="bottom" className="w-80">
+        <div>
+          <p className="font-medium">Choose a resume</p>
+          <p className="text-xs text-muted-foreground">
+            Use this resume for the selected jobs.
+          </p>
+        </div>
+        {resumes.length === 0 ? (
+          <p className="py-3 text-sm text-muted-foreground">
+            Upload a resume before applying.
+          </p>
+        ) : (
+          <RadioGroup value={selectedResumeId} onValueChange={onResumeChange}>
+            {resumes.map((resume) => (
+              <label
+                key={resume.id}
+                className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 hover:bg-muted/50"
+              >
+                <RadioGroupItem value={resume.id} />
+                <span className="min-w-0 flex-1 truncate">
+                  {resume.displayName || resume.fileName}
+                </span>
+                {resume.isActive ? (
+                  <span className="text-xs text-muted-foreground">Active</span>
+                ) : null}
+              </label>
+            ))}
+          </RadioGroup>
+        )}
+        <Button
+          type="button"
+          className="w-full"
+          disabled={!selectedResumeId || resumes.length === 0 || isApplying}
+          onClick={onConfirm}
+        >
+          {isApplying ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            "Confirm application"
+          )}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function SearchJobsTab() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -234,6 +288,12 @@ export default function SearchJobsTab() {
   const [isSearching, setIsSearching] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [applyingUrl, setApplyingUrl] = useState<string | null>(null);
+  const [selectedJobUrls, setSelectedJobUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [applyPopoverOpen, setApplyPopoverOpen] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
+  const [isBulkApplying, setIsBulkApplying] = useState(false);
   const didHydrateFromUrlRef = useRef(false);
   const didAutoSearchFromHistoryRef = useRef(false);
 
@@ -253,6 +313,23 @@ export default function SearchJobsTab() {
     queryFn: fetchJobSearchHistory,
   });
 
+  const { data: resumes = [] } = useQuery<Resume[]>({
+    queryKey: queryKeys.resume.all,
+    queryFn: fetchResumes,
+  });
+
+  useEffect(() => {
+    if (
+      selectedResumeId &&
+      resumes.some((resume) => resume.id === selectedResumeId)
+    ) {
+      return;
+    }
+    const defaultResume =
+      resumes.find((resume) => resume.isActive) ?? resumes[0];
+    setSelectedResumeId(defaultResume?.id ?? "");
+  }, [resumes, selectedResumeId]);
+
   const runSearch = useCallback(
     async (args: {
       searchQuery: string;
@@ -263,6 +340,8 @@ export default function SearchJobsTab() {
       try {
         const data = await searchJobs(args);
         setJobs(data.jobs);
+        setSelectedJobUrls(new Set());
+        setApplyPopoverOpen(false);
         void queryClient.invalidateQueries({
           queryKey: queryKeys.jobSearch.history(),
         });
@@ -415,109 +494,210 @@ export default function SearchJobsTab() {
     }
   };
 
+  const selectedJobs = jobs.filter((job) => selectedJobUrls.has(job.url));
+  const allJobsSelected =
+    jobs.length > 0 && selectedJobUrls.size === jobs.length;
+
+  const toggleJobSelection = (url: string) => {
+    setSelectedJobUrls((current) => {
+      const next = new Set(current);
+      if (next.has(url)) next.delete(url);
+      else next.add(url);
+      return next;
+    });
+  };
+
+  const toggleAllJobs = () => {
+    const shouldClear = selectedJobUrls.size > 0;
+    setSelectedJobUrls(
+      shouldClear ? new Set() : new Set(jobs.map((job) => job.url)),
+    );
+    if (shouldClear) setApplyPopoverOpen(false);
+  };
+
+  const confirmBulkApply = async () => {
+    if (!selectedResumeId || selectedJobs.length === 0 || isBulkApplying)
+      return;
+
+    setIsBulkApplying(true);
+    try {
+      const results = await Promise.all(
+        selectedJobs.map(async (job) => {
+          try {
+            await applyToJob({ jobUrl: job.url, resumeId: selectedResumeId });
+            return { url: job.url, success: true };
+          } catch {
+            return { url: job.url, success: false };
+          }
+        }),
+      );
+      const successfulUrls = new Set(
+        results.filter((result) => result.success).map((result) => result.url),
+      );
+      const failedCount = results.length - successfulUrls.size;
+
+      setJobs((current) =>
+        current.map((job) =>
+          successfulUrls.has(job.url) ? { ...job, applied: true } : job,
+        ),
+      );
+      setSelectedJobUrls(new Set());
+      setApplyPopoverOpen(false);
+
+      if (failedCount > 0) {
+        toast.error(
+          `${successfulUrls.size} application(s) started; ${failedCount} failed`,
+        );
+      } else {
+        toast.success(`${successfulUrls.size} application(s) started`);
+      }
+    } finally {
+      setIsBulkApplying(false);
+    }
+  };
+
   const handleUseSearch = (entry: JobSearchHistoryEntry) => {
     applyHistoryEntry(entry, { closePopover: true });
   };
 
   return (
     <div className="flex w-full flex-col gap-6 ">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap sm:flex-wrap sm:items-end justify-between items-center">
-          <div className="flex flex-row gap-3 justify-between w-full flex-3/4">
-            <div className="min-w-0 flex-1 w-[70%]">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Search
-              </label>
-              <Input
-                placeholder="Job title, keywords, stack…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
-                }}
-              />
-            </div>
-            <div className="w">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Date range
-              </label>
-              <Select value={dateCutoff} onValueChange={setDateCutoff}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Date range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_RANGE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="min-w-0 ">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Location
-              </label>
-              <CountryDropdown
-                defaultValue={selectedCountry?.alpha3 ?? "NGA"}
-                onChange={setSelectedCountry}
-                placeholder="Select location"
-                slim
-              />
-            </div>
+      <div className="min-h-[6.5rem] md:min-h-[4.5rem]">
+        {selectedJobUrls.size > 0 ? (
+          <div className="flex min-h-[6.5rem] items-center md:min-h-[4.5rem]">
+            <BulkApplyPopover
+              selectedCount={selectedJobUrls.size}
+              resumes={resumes}
+              selectedResumeId={selectedResumeId}
+              onResumeChange={setSelectedResumeId}
+              isApplying={isBulkApplying}
+              open={applyPopoverOpen}
+              onOpenChange={setApplyPopoverOpen}
+              onConfirm={() => void confirmBulkApply()}
+            />
           </div>
-          <div className="flex items-center gap-2 flex-1/4 justify-end">
-            <Button
-              type="button"
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="h-8"
-            >
-              {isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Search className="h-4 w-4" aria-hidden />
-              )}
-              <span className="ml-0.5">Search</span>
-            </Button>
-            <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" className="h-8">
-                  <History className="h-4 w-4" aria-hidden />
-                  <span className="">History</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[min(100vw-2rem,28rem)] p-0"
-                align="center"
-              >
-                <div className="border-b border-border px-3 py-2 text-sm font-medium">
-                  Recent searches
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:flex-nowrap sm:flex-wrap sm:items-end justify-between items-center">
+              <div className="flex flex-row gap-3 justify-between w-full flex-3/4">
+                <div className="min-w-0 flex-1 w-[70%]">
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Search
+                  </label>
+                  <Input
+                    placeholder="Job title, keywords, stack…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
+                    }}
+                  />
                 </div>
-                <div className="max-h-80 overflow-y-auto px-2 pb-2">
-                  {historyEntries.length === 0 ? (
-                    <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                      No history yet. Run a search to see it here.
-                    </p>
+                <div className="w">
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Date range
+                  </label>
+                  <Select value={dateCutoff} onValueChange={setDateCutoff}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Date range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_RANGE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 ">
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Location
+                  </label>
+                  <CountryDropdown
+                    defaultValue={selectedCountry?.alpha3 ?? "NGA"}
+                    onChange={setSelectedCountry}
+                    placeholder="Select location"
+                    slim
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-1/4 justify-end">
+                <Button
+                  type="button"
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="h-8"
+                >
+                  {isSearching ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
-                    historyEntries.map((entry, i) => (
-                      <HistoryEntryRow
-                        key={`${entry.requestedAt}-${i}`}
-                        entry={entry}
-                        onUseSearch={handleUseSearch}
-                      />
-                    ))
+                    <Search className="h-4 w-4" aria-hidden />
                   )}
-                </div>
-              </PopoverContent>
-            </Popover>
+                  <span className="ml-0.5">Search</span>
+                </Button>
+                <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="h-8">
+                      <History className="h-4 w-4" aria-hidden />
+                      <span className="">History</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[min(100vw-2rem,28rem)] p-0"
+                    align="center"
+                  >
+                    <div className="border-b border-border px-3 py-2 text-sm font-medium">
+                      Recent searches
+                    </div>
+                    <div className="max-h-80 overflow-y-auto px-2 pb-2">
+                      {historyEntries.length === 0 ? (
+                        <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+                          No history yet. Run a search to see it here.
+                        </p>
+                      ) : (
+                        historyEntries.map((entry, i) => (
+                          <HistoryEntryRow
+                            key={`${entry.requestedAt}-${i}`}
+                            entry={entry}
+                            onUseSearch={handleUseSearch}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-4 py-3 text-sm font-medium">
-          Results
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 text-sm font-medium">
+          <div className="flex min-w-0 items-center gap-2">
+            <Checkbox
+              aria-label={
+                allJobsSelected ? "Cancel selection" : "Select all jobs"
+              }
+              checked={
+                allJobsSelected
+                  ? true
+                  : selectedJobUrls.size > 0
+                    ? "indeterminate"
+                    : false
+              }
+              onCheckedChange={toggleAllJobs}
+            />
+            <span className="truncate">
+              {searchQuery.trim() ? `${searchQuery.trim()} jobs` : "Jobs"}
+            </span>
+            {selectedJobUrls.size > 0 ? (
+              <span className="shrink-0 text-xs font-normal text-muted-foreground">
+                {selectedJobUrls.size} selected
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="px-4 pb-2">
           {jobs.length === 0 ? (
@@ -530,6 +710,8 @@ export default function SearchJobsTab() {
                 key={job.url}
                 job={job}
                 applyingUrl={applyingUrl}
+                selected={selectedJobUrls.has(job.url)}
+                onToggleSelected={toggleJobSelection}
                 onApply={handleApply}
               />
             ))

@@ -38,10 +38,12 @@ export interface JobApplication {
 
 export type ResponseStatus = "none" | "rejected" | "interviewing" | "ghosted" | "offer" | "offer_accepted";
 
-export async function applyToJob(data: z.infer<typeof jobApplicationSchema>) {
+export async function applyToJob(
+  data: z.infer<typeof jobApplicationSchema> & { resumeId?: string },
+) {
   return apiFetch("/jobs/apply", {
     method: "POST",
-    body: JSON.stringify({ url: data.jobUrl }),
+    body: JSON.stringify({ url: data.jobUrl, resumeId: data.resumeId }),
     headers: { "Content-Type": "application/json" },
     fallbackError: "Failed to apply to job",
   });
