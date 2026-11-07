@@ -12,6 +12,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
@@ -303,28 +304,34 @@ function NavRow({
 
   if (item.execute) {
     return (
-      <button
-        type="button"
-        onClick={item.execute}
-        aria-label={item.label}
-        title={collapsed ? item.label : undefined}
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        tooltip={item.label}
         className={className}
       >
-        {content}
-      </button>
+        <button type="button" onClick={item.execute} aria-label={item.label}>
+          {content}
+        </button>
+      </SidebarMenuButton>
     );
   }
 
   return (
-    <Link
-      to={item.href}
-      aria-label={item.label}
-      aria-current={active ? "page" : undefined}
-      title={collapsed ? item.label : undefined}
+    <SidebarMenuButton
+      asChild
+      isActive={active}
+      tooltip={item.label}
       className={className}
     >
-      {content}
-    </Link>
+      <Link
+        to={item.href}
+        aria-label={item.label}
+        aria-current={active ? "page" : undefined}
+      >
+        {content}
+      </Link>
+    </SidebarMenuButton>
   );
 }
 
