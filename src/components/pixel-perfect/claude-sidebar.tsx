@@ -8,6 +8,9 @@ import {
   SidebarProvider,
   SidebarHeader,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
@@ -158,37 +161,55 @@ export default function ClaudeSidebar({
               </button>
             </SidebarHeader>
 
-            <SidebarMenu className="gap-px! pt-2 mt-8 px-2">
-              {navItems.map((it) => (
-                <SidebarMenuItem key={it.label} className="list-none!">
-                  <NavRow
-                    item={it}
-                    active={
-                      pathname === (it.activePath ?? it.href) ||
-                      pathname.startsWith(`${it.activePath ?? it.href}/`)
-                    }
-                    collapsed={collapsed}
-                  />
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <SidebarGroup className="mt-8 p-0">
+              <SidebarGroupLabel
+                className="h-6 px-4 text-[10px] uppercase tracking-wider"
+                style={{ opacity: collapsed ? 0 : 1 }}
+              >
+                Workspace
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-px px-2">
+                  {navItems.map((it) => (
+                    <SidebarMenuItem key={it.label} className="list-none!">
+                      <NavRow
+                        item={it}
+                        active={
+                          pathname === (it.activePath ?? it.href) ||
+                          pathname.startsWith(`${it.activePath ?? it.href}/`)
+                        }
+                        collapsed={collapsed}
+                      />
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-            <div className="mt-auto px-2 pb-2">
-              <SidebarMenu className="gap-px!">
-                {accountNavItems.map((it) => (
-                  <SidebarMenuItem key={it.label} className="list-none!">
-                    <NavRow
-                      item={it}
-                      active={
-                        pathname === (it.activePath ?? it.href) ||
-                        pathname.startsWith(`${it.activePath ?? it.href}/`)
-                      }
-                      collapsed={collapsed}
-                    />
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </div>
+            <SidebarGroup className="mt-auto p-0 pb-2">
+              <SidebarGroupLabel
+                className="h-6 px-4 text-[10px] uppercase tracking-wider"
+                style={{ opacity: collapsed ? 0 : 1 }}
+              >
+                Account
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-px px-2">
+                  {accountNavItems.map((it) => (
+                    <SidebarMenuItem key={it.label} className="list-none!">
+                      <NavRow
+                        item={it}
+                        active={
+                          pathname === (it.activePath ?? it.href) ||
+                          pathname.startsWith(`${it.activePath ?? it.href}/`)
+                        }
+                        collapsed={collapsed}
+                      />
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
             <SidebarFooter className="p-0! gap-0! border-t border-sidebar-border">
               <button
