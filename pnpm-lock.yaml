@@ -21,8 +21,8 @@ importers:
         specifier: ^0.48.1
         version: 0.48.1(@floating-ui/dom@1.7.6)(@types/hast@3.0.4)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(postcss@8.5.6)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.2.0)
       '@fernohq/analytics-next':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.0.4
+        version: 2.0.4
       '@fontsource-variable/geist':
         specifier: ^5.2.8
         version: 5.2.8
@@ -549,8 +549,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fernohq/analytics-next@2.0.1':
-    resolution: {integrity: sha512-QoziJbndaQ/lKUSt8DigBEeNx7PGbKduHzNYvxfWTMpaPewsJJdHJbqfWQPXyLzDcRRltuTylJYWDjplyvVv8w==}
+  '@fernohq/analytics-next@2.0.4':
+    resolution: {integrity: sha512-LHMFhfChRjWXslgQIiITelTl9iHQZPtZDtJuqUvbTLDSG+4YujaPtMsJ2amfITOfPhJUCGBGJ/M4LMI/FiWuLw==}
 
   '@floating-ui/core@1.7.4':
     resolution: {integrity: sha512-C3HlIdsBxszvm5McXlB8PeOEWfBhcGBTZGkGlWc2U0KFY5IwG5OQEuQ8rq52DZmcHDlPLd+YFBK+cZcytwIFWg==}
@@ -4794,7 +4794,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@fernohq/analytics-next@2.0.1':
+  '@fernohq/analytics-next@2.0.4':
     dependencies:
       '@lukeed/uuid': 2.0.1
       '@segment/analytics-core': 1.8.3
