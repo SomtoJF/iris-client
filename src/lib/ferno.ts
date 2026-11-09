@@ -1,10 +1,12 @@
+import { safelyCall } from "./ferno-safe-call";
+
 type AnalyticsClient = {
-  load(settings: unknown, options?: unknown): AnalyticsClient;
-  track(name: string): Promise<unknown>;
-  page(properties?: Record<string, string>): Promise<unknown>;
-  identify(userId: string, traits?: Record<string, string>): Promise<unknown>;
-  reset(): void;
-  trackForm(form: HTMLFormElement, name: string): Promise<unknown>;
+  load(settings: unknown, options?: unknown): AnalyticsClient & PromiseLike<unknown>;
+  track?: (name: string) => Promise<unknown>;
+  page?: (properties?: Record<string, string>) => Promise<unknown>;
+  identify?: (userId: string, traits?: Record<string, string>) => Promise<unknown>;
+  reset?: () => void;
+  trackForm?: (form: HTMLFormElement, name: string) => Promise<unknown>;
 };
 
 const writeKey = import.meta.env.VITE_FERNO_WRITE_KEY as string | undefined;
@@ -21,7 +23,7 @@ function loadFerno() {
 
   analyticsPromise ??= import("@fernohq/analytics-next").then(({ AnalyticsBrowser }) => {
     const analytics = new AnalyticsBrowser();
-    analytics.load(
+    return analytics.load(
       {
         writeKey,
         cdnSettings: {
@@ -41,9 +43,8 @@ function loadFerno() {
           "Segment.io": { apiHost, apiPath, authMode: "bearer" },
         },
       },
-    );
-    return analytics as unknown as AnalyticsClient;
-  });
+    ).then(() => analytics as unknown as AnalyticsClient);
+  }).catch(() => undefined);
 
   return analyticsPromise;
 }
@@ -58,11 +59,11 @@ let identifiedUser: string | undefined;
 export function trackFernoPage(path: string) {
   if (lastPage === path) return;
   lastPage = path;
-  void loadFerno().then((analytics) => analytics?.page({ path }));
+  void loadFerno().then((analytics) => safelyCall(analytics, "page", { path }));
 }
 
 export function trackFernoEvent(name: "signed_in" | "signed_up" | "logged_out") {
-  void loadFerno().then((analytics) => analytics?.track(name));
+  void loadFerno().then((analytics) => safelyCall(analytics, "track", name));
 }
 
 export function identifyFernoUser(
@@ -71,19 +72,21 @@ export function identifyFernoUser(
 ) {
   if (identifiedUser === userId) return;
   identifiedUser = userId;
-  void loadFerno().then((analytics) => analytics?.identify(userId, traits));
+  void loadFerno().then((analytics) =>
+    safelyCall(analytics, "identify", userId, traits),
+  );
 }
 
 export function resetFerno() {
   identifiedUser = undefined;
-  void loadFerno().then((analytics) => analytics?.reset());
+  void loadFerno().then((analytics) => safelyCall(analytics, "reset"));
 }
 
 export function trackAuthForm(form: HTMLFormElement, eventName: "signed_in" | "signed_up") {
   void loadFerno().then((analytics) => {
     if (!analytics || form.dataset.fernoTracked === "true") return;
     form.dataset.fernoTracked = "true";
-    void analytics.trackForm(form, eventName);
+    safelyCall(analytics, "trackForm", form, eventName);
   });
 }
 

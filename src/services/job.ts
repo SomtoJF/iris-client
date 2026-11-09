@@ -18,6 +18,7 @@ export interface JobApplication {
   jobTitle: string;
   companyName: string;
   status:
+    | "started"
     | "queued"
     | "processing"
     | "applied"
@@ -79,9 +80,11 @@ export async function patchJobApplication(
   });
 }
 
-export async function retryJobApplication(id: string): Promise<void> {
+export async function retryJobApplication(id: string, resumeId?: string): Promise<void> {
   await apiFetch(`/jobs/${id}/retry-application`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(resumeId ? { resumeId } : {}),
     fallbackError: "Failed to retry job application",
   });
 }

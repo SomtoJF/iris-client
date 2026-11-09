@@ -41,6 +41,8 @@ import { useRealtimeEvents } from "@/context/RealTimeEventContext";
 import { toast } from "@/hooks/toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/querykeyfactory";
+import { fetchResumes, type Resume } from "@/services/resume";
+import { ResumeSelectionPopover } from "./ResumeSelectionPopover";
 import UserActionDialog from "./UserActionDialog";
 import ApplicationLiveViewDialog from "./ApplicationLiveViewDialog";
 import ApplicationDataDialog from "./ApplicationDataDialog";
@@ -78,6 +80,8 @@ const ALL_RESPONSE_STATUSES: ResponseStatus[] = [
 ];
 
 const ALL_STATUSES: JobStatus[] = [
+	"started",
+	"queued",
   "processing",
   "applied",
   "failed",
@@ -87,6 +91,10 @@ const ALL_STATUSES: JobStatus[] = [
 ];
 
 function isSelectableStatus(status: JobStatus): boolean {
+	return status === "started" || status === "failed" || status === "cancelled" || status === "halted";
+}
+
+function isRetryableStatus(status: JobStatus): boolean {
   return status === "failed" || status === "cancelled" || status === "halted";
 }
 
@@ -95,6 +103,16 @@ function getStatusTagConfig(status: JobStatus): {
   iconStyles: string;
 } {
   switch (status) {
+    case "started":
+      return {
+        textStyles: "text-blue-500",
+        iconStyles: "bg-blue-500 opacity-50",
+      };
+    case "queued":
+      return {
+        textStyles: "text-violet-500 animate-pulse",
+        iconStyles: "bg-violet-500 animate-pulse opacity-50",
+      };
     case "applied":
       return {
         textStyles: "text-green-600",
@@ -333,7 +351,7 @@ function buildColumns(
               </>
             )}
 
-            {isSelectableStatus(row.original.status) && (
+            {isRetryableStatus(row.original.status) && (
               <button
                 className="ml-2 text-xs items-center flex no-wrap text-blue-500 hover:text-blue-600 cursor-pointer disabled:opacity-50"
                 disabled={isRetrying}
@@ -471,6 +489,8 @@ export default function OngoingApplicationsTab() {
   >(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const [retryPopoverOpen, setRetryPopoverOpen] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState("");
   const [actionDialogJobId, setActionDialogJobId] = useState<string | null>(
     null,
   );
@@ -484,6 +504,17 @@ export default function OngoingApplicationsTab() {
   const [isDeleting, setIsDeleting] = useState(false);
   const { addEventListener } = useRealtimeEvents();
   const queryClient = useQueryClient();
+
+  const { data: resumes = [], isLoading: resumesLoading } = useQuery<Resume[]>({
+    queryKey: queryKeys.resume.all,
+    queryFn: fetchResumes,
+  });
+
+  useEffect(() => {
+    if (selectedResumeId && resumes.some((resume) => resume.id === selectedResumeId)) return;
+    const activeResume = resumes.find((resume) => resume.isActive) ?? resumes[0];
+    setSelectedResumeId(activeResume?.id ?? "");
+  }, [resumes, selectedResumeId]);
 
   const activeStatus = statusFilter === "all" ? undefined : statusFilter;
   const activeResponseStatus =
@@ -666,7 +697,7 @@ export default function OngoingApplicationsTab() {
     });
   }
 
-  function markApplicationsAsProcessing(ids: string[]) {
+  function markApplicationsAsQueued(ids: string[]) {
     const idSet = new Set(ids);
     queryClient.setQueriesData(
       { queryKey: queryKeys.jobApplication.lists() },
@@ -678,7 +709,7 @@ export default function OngoingApplicationsTab() {
             idSet.has(job.id)
               ? {
                   ...job,
-                  status: "processing" as const,
+                  status: "queued" as const,
                   failureReason: undefined,
                   haltReason: undefined,
                   cancellationReason: undefined,
@@ -708,7 +739,7 @@ export default function OngoingApplicationsTab() {
     );
   }
 
-  async function retryApplications(ids: string[]) {
+  async function retryApplications(ids: string[], resumeId?: string) {
     const uniqueIds = [...new Set(ids)];
     if (uniqueIds.length === 0) return;
 
@@ -719,7 +750,7 @@ export default function OngoingApplicationsTab() {
     });
 
     const results = await Promise.allSettled(
-      uniqueIds.map((id) => retryJobApplication(id)),
+      uniqueIds.map((id) => retryJobApplication(id, resumeId)),
     );
     const succeededIds = uniqueIds.filter(
       (_, index) => results[index].status === "fulfilled",
@@ -727,7 +758,7 @@ export default function OngoingApplicationsTab() {
     const failedCount = uniqueIds.length - succeededIds.length;
 
     if (succeededIds.length > 0) {
-      markApplicationsAsProcessing(succeededIds);
+      markApplicationsAsQueued(succeededIds);
       removeSelectedIds(succeededIds);
     }
 
@@ -840,7 +871,9 @@ export default function OngoingApplicationsTab() {
   }
 
   async function handleRetryAll() {
-    await retryApplications([...selectedIds]);
+    if (!selectedResumeId || resumesLoading) return;
+    await retryApplications([...selectedIds], selectedResumeId);
+    setRetryPopoverOpen(false);
   }
 
   async function handleConfirmDeleteSelected() {
@@ -928,14 +961,20 @@ export default function OngoingApplicationsTab() {
               {selectedIds.size} selected
             </p>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={handleRetryAll}
-                size="sm"
-                disabled={retryingIds.size > 0 || isDeleting}
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Retry All ({selectedIds.size})
-              </Button>
+              <ResumeSelectionPopover
+                selectedCount={selectedIds.size}
+                resumes={resumes}
+                selectedResumeId={selectedResumeId}
+                onResumeChange={setSelectedResumeId}
+                isLoading={retryingIds.size > 0 || resumesLoading}
+                open={retryPopoverOpen}
+                onOpenChange={setRetryPopoverOpen}
+                onConfirm={() => void handleRetryAll()}
+                triggerLabel="Retry Auto-Apply"
+                description="Use this resume for the selected applications."
+                emptyMessage="Upload a resume before retrying."
+                confirmLabel="Continue"
+              />
               <Button
                 onClick={() => setIsDeleteDialogOpen(true)}
                 size="sm"
